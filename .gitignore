@@ -1,0 +1,21 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+npm-debug.log*
+
+# Private resume storage (uploaded PDFs) — never commit user files
+server/private_uploads/
+
+# Uploads & runtime data
+uploads/
+tmp/
+.temp/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
