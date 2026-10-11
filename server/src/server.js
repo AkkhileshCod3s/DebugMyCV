@@ -12,28 +12,34 @@ async function main() {
 
   try {
     await verifyDatabase();
-    console.log(`[db] Connected to MySQL at ${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`);
+    console.log();
   } catch (err) {
     console.error(
-      `[db] Could not connect to MySQL (${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}): ${err.code || err.message}`,
+      `[db] Could not connect to database (${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}): ${err.code || err.message}`,
     );
-    console.error('[db] Check DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD in .env and run database/schema.sql.');
+    console.error('[db] Check DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD in .env and run scripts/db-setup.mjs.');
     process.exit(1);
   }
 
   const app = createApp();
-  const server = app.listen(env.PORT, () => {
-    console.log(`[server] CareerLens AI API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
-    console.log(`[server] Timezone: ${env.APP_TIMEZONE} | AI: ${env.AI_ENABLED && env.GROQ_API_KEY ? 'configured' : 'not configured'}`);
-  });
 
-  const shutdown = async () => {
-    server.close();
-    await pool.end().catch(() => {});
-    process.exit(0);
-  };
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
+  // Long-lived local process only. Inside a Vercel Serverless Function this
+  // file is never imported directly: the framework calls the exported handler.
+  if (process.env.VERCEL !== '1' && process.env.IS_VERCEL_VERCEL_FUNCTION !== '1') {
+    const { createServer } = await import('http');
+    const server = createServer(app);
+    const port = env.PORT || 5000;
+    await new Promise((resolve) => server.listen(port, resolve));
+    const shutdown = async () => {
+      await new Promise((resolve) => server.close(resolve));
+      await pool.end().catch(() => {});
+      process.exit(0);
+    };
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+    console.log(`[server] DebugMyCV API listening on http://localhost:${port} (${env.NODE_ENV})`);
+    console.log(`[server] Timezone: ${env.APP_TIMEZONE} | AI: ${env.AI_ENABLED && env.GROQ_API_KEY ? 'configured' : 'not configured'}`);
+  }
 }
 
 main().catch((err) => {

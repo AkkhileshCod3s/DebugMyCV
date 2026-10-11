@@ -1,110 +1,63 @@
 /* ─────────────────────────────────────────────────────────────────────────────
-   CareerLens AI — Soft Glass Pastel AI design tokens
+   CareerLens AI — Marked-Up Manuscript design tokens
+   paper, ink and an editor's red pen. Square corners (0px), 1px hairline rules,
+   no shadows, no gradients, no glass — structure comes from rules and whitespace.
    ───────────────────────────────────────────────────────────────────────────── */
 
 :root {
   color-scheme: light;
 
-  /* Brand */
-  --violet: #8b7cf6;
-  --violet-strong: #6f5ce0;
-  --cyan: #3cd6e8;
-  --mint: #9be7b5;
+  /* Brand */ /* red pen accent */
+  --accent: #C2331E;
+  --green: #2F5D3A;
+  --ochre: #8A5F0A;
 
-  /* Pastel tints */
-  --tint-pink: #ffd6dc;
-  --tint-lavender: #ddd6ff;
-  --tint-mint: #cdf3dc;
-  --tint-sky: #cfe8ff;
-  --tint-cream: #ffe9d2;
+  /* Paper / surface / ink (light) */
+  --paper: #F4F1EA;
+  --surface: #FBFAF6;
+  --ink: #17150F;
+  --ink-2: #5C574B;
+  --ink-3: #6F6A5C;
+  --rule: #D9D4C5;
 
-  /* Text */
-  --text-heading: #12151f;
-  --text-body: #3d4354;
-  --text-muted: #6b7280;
-  --text-inverted: #ffffff;
+  /* Layout */
+  --container: 1280px;
+  --space: 8px;
 
-  /* Surfaces */
-  --surface: rgba(255, 255, 255, 0.65);
-  --surface-strong: rgba(255, 255, 255, 0.78);
-  --surface-solid: #ffffff;
-  --surface-border: rgba(255, 255, 255, 0.6);
-  --surface-input: rgba(255, 255, 255, 0.75);
-
-  /* Effects */
-  --glass-blur: blur(20px);
-  --radius-sm: 14px;
-  --radius-md: 24px;
-  --radius-lg: 32px;
-  --shadow: 0 10px 40px rgba(120, 140, 200, 0.15);
-  --shadow-hover: 0 16px 48px rgba(120, 140, 200, 0.24);
-  --ring: 0 0 0 3px rgba(139, 124, 246, 0.35);
-
-  /* Buttons */
-  --btn-dark: #0b0b0f;
-  --btn-dark-hover: #22222b;
+  /* Type */ /* google fonts are loaded from index.html */
+  --font-sans: 'Schibsted Grotesk', 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Mono', 'Roboto Mono', monospace;
 
   /* Motion */
   --transition: 240ms cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Layout */
-  --container: 1180px;
-  --nav-height: 72px;
-  --space: 8px;
-
-  /* Type */
-  --font: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-
-  /* Background mesh gradient */
-  --bg-base: #f4f6fb;
-  --bg-mesh:
-    radial-gradient(58rem 42rem at 8% -6%, rgba(207, 232, 255, 0.95) 0%, rgba(207, 232, 255, 0) 60%),
-    radial-gradient(52rem 40rem at 100% 0%, rgba(255, 233, 210, 0.9) 0%, rgba(255, 233, 210, 0) 55%),
-    radial-gradient(56rem 44rem at 0% 92%, rgba(217, 245, 228, 0.9) 0%, rgba(217, 245, 228, 0) 58%),
-    radial-gradient(60rem 46rem at 96% 88%, rgba(228, 220, 255, 0.9) 0%, rgba(228, 220, 255, 0) 60%),
-    radial-gradient(40rem 30rem at 50% 42%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 70%);
-
-  /* Score ring */
-  --ring-track: rgba(139, 124, 246, 0.16);
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --violet: #a99cff;
-  --violet-strong: #b9adff;
-  --cyan: #5fe0f0;
-  --mint: #7fdcaa;
+  /* Paper / surface / ink (dark) */
+  --paper: #14130F;
+  --surface: #1C1B16;
+  --ink: #EDE8DA;
+  --ink-2: #B8B1A0;
+  --ink-3: #8F8977;
+  --rule: #38352B;
 
-  --tint-pink: #3a2c34;
-  --tint-lavender: #2e2b46;
-  --tint-mint: #21382d;
-  --tint-sky: #1e3040;
-  --tint-cream: #3a3126;
+  /* Brand */ /* red pen accent (dark) */
+  --accent: #E0583F;
+  --green: #6FB380;
+  --ochre: #D4A23A;
 
-  --text-heading: #f2f4fb;
-  --text-body: #c8cdda;
-  --text-muted: #99a0b3;
-  --text-inverted: #0b0b0f;
+  /* Layout */
+  --container: 1280px;
+  --space: 8px;
 
-  --surface: rgba(24, 27, 40, 0.66);
-  --surface-strong: rgba(28, 31, 46, 0.82);
-  --surface-solid: #171a26;
-  --surface-border: rgba(255, 255, 255, 0.1);
-  --surface-input: rgba(18, 21, 33, 0.75);
+  /* Type */
+  --font-sans: 'Schibsted Grotesk', 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-heading: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Mono', 'Roboto Mono', monospace;
 
-  --shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-  --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.55);
-
-  --btn-dark: #f5f6fb;
-  --btn-dark-hover: #e4e6f2;
-
-  --ring-track: rgba(169, 156, 255, 0.18);
-
-  --bg-base: #0d0f18;
-  --bg-mesh:
-    radial-gradient(58rem 42rem at 8% -6%, rgba(52, 84, 138, 0.55) 0%, rgba(52, 84, 138, 0) 60%),
-    radial-gradient(52rem 40rem at 100% 0%, rgba(120, 78, 46, 0.4) 0%, rgba(120, 78, 46, 0) 55%),
-    radial-gradient(56rem 44rem at 0% 92%, rgba(34, 96, 66, 0.42) 0%, rgba(34, 96, 66, 0) 58%),
-    radial-gradient(60rem 46rem at 96% 88%, rgba(78, 62, 148, 0.5) 0%, rgba(78, 62, 148, 0) 60%);
+  /* Motion */
+  --transition: 240ms cubic-bezier(0.4, 0, 0.2, 1);
 }

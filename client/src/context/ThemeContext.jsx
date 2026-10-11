@@ -12,16 +12,37 @@ function getInitialTheme() {
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme);
 
+  const toggle = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem(STORAGE_KEY, theme);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#0d0f18' : '#CFE8FF');
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#14130F' : '#F4F1EA');
   }, [theme]);
 
-  const toggle = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
+  const [manualOverride, setManualOverride] = useState(false);
 
-  return <ThemeContext.Provider value={{ theme, toggle }}>{children}</ThemeContext.Provider>;
+  // "Night proof" manual toggle: when on, ignores prefers-color-scheme and forces
+  // the chosen theme even if the user's OS colorscheme changes.
+  useEffect(() => {
+    if (!manualOverride) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => {
+      if (theme === 'dark') return;
+      setTheme('dark');
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [theme]);
+
+  const toggleNightProof = useCallback(() => setManualOverride((m) => !m), []);
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggle, nightProof: manualOverride, toggleNightProof }}>
+      {children}
+    </ThemeContext.Provider>
+  );
 }
 
 export function useTheme() {

@@ -1,55 +1,45 @@
 import { Link } from 'react-router-dom';
-import {
-  ScanSearch,
-  Sparkles,
-  ShieldCheck,
-  FileText,
-  ClipboardList,
-  BarChart3,
-  ArrowRight,
-  CheckCircle2,
-  Lock,
-  Clock,
-} from 'lucide-react';
-import { GlassCard } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
+
+const SectionHeading = ({ eyebrow, title, hint }) => (
+  <div className="section-heading">
+    <span className="section-eyebrow">{eyebrow}</span>
+    <h2 className="section-title">{title}</h2>
+    {hint && <p className="section-hint">{hint}</p>}
+  </div>
+);
 
 const FEATURES = [
   {
-    icon: BarChart3,
-    tone: '',
     title: 'Match score out of 100',
     text: 'A transparent, deterministic score computed on the server from matched, related and missing skills.',
+    note: 'One number, fully explained. No opaque average.',
   },
   {
-    icon: ClipboardList,
-    tone: 'sky',
     title: 'Skills gap at a glance',
     text: 'See matched skills, missing skills and transferable ones, plus the job requirements your resume does not yet show.',
+    note: 'Every gap is tied to the job description you pasted.',
   },
   {
-    icon: FileText,
-    tone: 'mint',
     title: 'Concrete resume edits',
     text: 'Get truthful, specific improvement suggestions and suggested keywords — never invented experience.',
+    note: 'Edits stay faithful to your actual history and roles.',
   },
   {
-    icon: Sparkles,
-    tone: 'cream',
     title: 'Interview preparation',
     text: 'Receive interview questions generated for the exact role and resume you analysed.',
+    note: 'Questions only cover what your resume claims.',
   },
   {
-    icon: Clock,
-    tone: 'pink',
     title: 'History & daily usage',
     text: 'Reopen past analyses anytime and keep track of your remaining daily uploads and AI analyses.',
+    note: 'Your counters reset at midnight in your local timezone.',
   },
   {
-    icon: Lock,
-    tone: '',
     title: 'Private by design',
     text: 'Resumes, job descriptions and results belong to your account and are never shared with other users.',
+    note: 'Nothing is sold, shared or used to train models.',
   },
 ];
 
@@ -61,106 +51,131 @@ const STEPS = [
 
 export default function Landing() {
   const { user } = useAuth();
+  const { theme, toggle, nightProof, toggleNightProof } = useTheme();
+  const isDark = theme === 'dark';
 
   return (
     <div className="container">
-      <section className="hero animate-in">
-        <span className="hero-badge">
-          <Sparkles size={15} strokeWidth={1.75} aria-hidden="true" />
-          AI resume &amp; job matching
-        </span>
-        <h1>
-          Know how well your resume <span className="violet">matches the job</span> before you apply
-        </h1>
-        <p className="lead">
-          CareerLens AI compares your resume with a job description and shows the match score, matched and
-          missing skills, resume strengths and specific improvements — plus interview questions for that
-          exact role.
-        </p>
-        <div className="hero-actions">
-          <Link to={user ? '/analyze' : '/register'} className="btn btn-primary">
-            <ScanSearch size={18} strokeWidth={1.75} aria-hidden="true" />
-            {user ? 'Start an analysis' : 'Create free account'}
-            <ArrowRight size={17} strokeWidth={1.75} aria-hidden="true" />
-          </Link>
-          {!user && (
-            <Link to="/login" className="btn btn-secondary">
-              Sign in
-            </Link>
-          )}
+      <header className="header">
+        <div className="header-left">
+          <h1 className="header-title">DebugMyCV</h1>
         </div>
-        <p className="muted small">AI-generated scores are estimates — not hiring decisions or guarantees.</p>
+        <nav className="header-right" aria-label="Landing">
+          <Link to="/analyze" className="header-link">
+            How it works
+          </Link>
+          <Link to="/analyze" className="header-link">
+            Sample report
+          </Link>
+          <button
+            type="button"
+            className="header-link"
+            onClick={toggleNightProof}
+            aria-pressed={nightProof}
+            aria-label={nightProof ? 'Switch to automatic theme' : 'Switch to night proof'}
+          >
+            Night proof
+          </button>
+        </nav>
+      </header>
+
+      <section className="hero animate-in">
+        <div className="hero-left">
+          <span className="hero-eyebrow">01 / Upload</span>
+          <h1 className="hero-title">
+            Find out what your resume
+            <em> actually says.</em>
+          </h1>
+          <p className="hero-sub">
+            Upload a resume. You get a score, notes in the margin tied to the exact lines, and rewrites you can copy.
+          </p>
+        </div>
+        <div className="hero-right">
+          <div className="dropzone">
+            <span className="crop-mark crop-mark-tl" aria-hidden="true"></span>
+            <span className="crop-mark crop-mark-tr" aria-hidden="true"></span>
+            <span className="crop-mark crop-mark-bl" aria-hidden="true"></span>
+            <span className="crop-mark crop-mark-br" aria-hidden="true"></span>
+            <div className="dropzone-shim" />
+            <div className="dropzone-will-change">
+              <span className="dropzone-label">Sheet 1 of 1</span>
+              <h1 className="dropzone-title">Drop your resume on this page.</h1>
+              <p className="lead">Upload a PDF or DOCX, see what the analysis actually flagged, and copy rewrites.</p>
+              <div className="hero-actions">
+                <Link to="/analyze" className="btn btn-primary">
+                  Upload resume
+                </Link>
+                <span className="hero-limit">
+                  PDF or DOCX · 4 <strong>MB</strong> maximum
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="section" aria-labelledby="features-heading">
-        <div className="section-head">
-          <h2 id="features-heading">Everything you need to tailor your application</h2>
-          <p className="muted">Clear, honest feedback grounded only in the resume and job description you provide.</p>
-        </div>
-        <div className="grid">
-          {FEATURES.map(({ icon: Icon, tone, title, text }) => (
-            <GlassCard key={title} className="feature-card glass-hover" as="article">
-              <span className={`icon-badge ${tone}`} aria-hidden="true">
-                <Icon size={22} strokeWidth={1.75} />
-              </span>
-              <h3>{title}</h3>
-              <p className="muted small">{text}</p>
-            </GlassCard>
+        <SectionHeading
+          eyebrow="02 / The report"
+          title="Everything you need to tailor your application"
+          hint="Clear, honest feedback grounded only in the resume and job description you provide."
+        />
+        <div className="report-rows">
+          {FEATURES.map(({ title, text, note }, i) => (
+            <div key={title} className="report-row">
+              <span className="report-num">{String(i + 1).padStart(2, '0')}</span>
+              <div className="report-body">
+                <h3 className="report-title">{title}</h3>
+                <p className="report-text">{text}</p>
+                {note && <p className="report-note">{note}</p>}
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
       <section className="section" aria-labelledby="how-heading">
-        <div className="section-head">
-          <h2 id="how-heading">How it works</h2>
-          <p className="muted">Three steps, about a minute.</p>
-        </div>
-        <div className="steps">
+        <SectionHeading eyebrow="02 / The report" title="How it works" hint="Three steps, about a minute." />
+        <div className="report-rows">
           {STEPS.map((step, i) => (
-            <GlassCard key={step.title} className="step glass-hover" as="article">
-              <span className="step-num" aria-hidden="true">
-                {i + 1}
-              </span>
-              <h3>{step.title}</h3>
-              <p className="muted small">{step.text}</p>
-            </GlassCard>
+            <div key={step.title} className="report-row">
+              <span className="report-num">{String(i + 1).padStart(2, '0')}</span>
+              <div className="report-body">
+                <h3 className="report-title">{step.title}</h3>
+                <p className="report-text">{step.text}</p>
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
       <section className="section" aria-labelledby="privacy-heading">
-        <GlassCard className="glass-strong privacy-note" as="article" style={{ maxWidth: 860, margin: '0 auto' }}>
-          <span className="icon-badge mint" aria-hidden="true">
-            <ShieldCheck size={24} strokeWidth={1.75} />
-          </span>
-          <div className="stack" style={{ gap: 8 }}>
-            <h2 id="privacy-heading">Your resume stays yours</h2>
-            <ul className="bullet-list">
-              <li>
-                <CheckCircle2 size={17} className="violet" aria-hidden="true" />
-                <span>Access to every resume, job description and analysis is restricted to your account.</span>
-              </li>
-              <li>
-                <CheckCircle2 size={17} className="violet" aria-hidden="true" />
-                <span>Passwords are hashed with bcrypt; sessions are HTTP-only cookies managed by the server.</span>
-              </li>
-              <li>
-                <CheckCircle2 size={17} className="violet" aria-hidden="true" />
-                <span>The Groq API key is used only on the server and is never sent to your browser.</span>
-              </li>
-              <li>
-                <CheckCircle2 size={17} className="violet" aria-hidden="true" />
-                <span>Uploads are stored privately and can be deleted permanently from your history and profile.</span>
-              </li>
-            </ul>
-            <div className="row" style={{ marginTop: 6 }}>
-              <Link to={user ? '/dashboard' : '/register'} className="btn btn-primary">
-                {user ? 'Go to dashboard' : 'Get started free'}
-              </Link>
+        <SectionHeading eyebrow="02 / The report" title="Your resume stays yours" hint="Access to every resume, job description and analysis is restricted to your account." />
+        <div className="report-rows">
+          <div className="report-row">
+            <span className="report-num">01</span>
+            <div className="report-body">
+              <h3 className="report-title">Passwords are hashed with bcrypt; sessions are HTTP-only cookies managed by the server.</h3>
             </div>
           </div>
-        </GlassCard>
+          <div className="report-row">
+            <span className="report-num">02</span>
+            <div className="report-body">
+              <h3 className="report-title">The Groq API key is used only on the server and is never sent to your browser.</h3>
+            </div>
+          </div>
+          <div className="report-row">
+            <span className="report-num">03</span>
+            <div className="report-body">
+              <h3 className="report-title">Uploads are deleted right after analysis and never stored as files.</h3>
+            </div>
+          </div>
+        </div>
       </section>
+
+      <footer className="footer">
+        <p>DebugMyCV · Resume analysis</p>
+      </footer>
     </div>
   );
 }

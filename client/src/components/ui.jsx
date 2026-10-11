@@ -13,6 +13,22 @@ export function GlassCard({ children, className = '', hover = false, strong = fa
   );
 }
 
+/* ── Page head / section headings ──────────────────────────────────────────── */
+
+export function SectionHeading({ eyebrow, title, hint }) {
+  return (
+    <div className="section-head">
+      {eyebrow && <span className="section-eyebrow">{eyebrow}</span>}
+      <h2 className="section-title">{title}</h2>
+      {hint && <p className="section-hint">{hint}</p>}
+    </div>
+  );
+}
+
+export function SubNote({ children }) {
+  return <p className="sub-note">{children}</p>;
+}
+
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
 const Button = forwardRef(function Button(
   { variant = 'primary', size, block, loading, children, className = '', ...rest },

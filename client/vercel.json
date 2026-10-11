@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "client/dist/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "server/src/app.js",
+      "use": "@vercel/express"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/app.js"
+    }
+  ]
+}

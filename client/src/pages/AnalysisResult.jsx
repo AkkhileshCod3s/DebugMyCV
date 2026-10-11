@@ -1,27 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowLeft,
-  ScanSearch,
-  CheckCircle2,
-  XCircle,
-  Sparkles,
-  Lightbulb,
-  KeyRound,
-  MessageSquareQuote,
-  Target,
-  Download,
-} from 'lucide-react';
-import {
-  GlassCard,
-  LoadingSpinner,
-  ErrorMessage,
-  GhostButton,
-  PrimaryButton,
-  StatusBadge,
-} from '../components/ui.jsx';
-import { MatchScore, scoreLabel } from '../components/MatchScore.jsx';
-import { SkillTagList } from '../components/SkillTag.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
+import { GhostButton, PrimaryButton, LoadingSpinner, ErrorMessage } from '../components/ui.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { api } from '../services/api.js';
 
@@ -32,33 +12,16 @@ const fmtDate = (iso) =>
     timeZone: 'Asia/Kolkata',
   });
 
-function Section({ icon: Icon, tone = '', title, children }) {
+function SectionHead({ label, icon: Icon }) {
   return (
-    <GlassCard className="stack" as="section">
-      <h2 className="card-title">
-        <span className={`icon-badge ${tone}`} aria-hidden="true">
-          <Icon size={19} strokeWidth={1.75} />
+    <div className="section-head">
+      {label && (
+        <span className="section-eyebrow">
+          {Icon && <Icon size={14} strokeWidth={1.75} aria-hidden="true" />}
+          {label}
         </span>
-        {title}
-      </h2>
-      {children}
-    </GlassCard>
-  );
-}
-
-function Bullets({ items, tone = 'ok', empty = 'Nothing identified.' }) {
-  if (!items?.length) return <p className="muted small">{empty}</p>;
-  const Icon = tone === 'ok' ? CheckCircle2 : tone === 'bad' ? XCircle : Lightbulb;
-  const cls = tone === 'bad' ? 'field-error' : tone === 'idea' ? 'violet' : 'violet';
-  return (
-    <ul className="bullet-list">
-      {items.map((item, i) => (
-        <li key={`${i}-${item.slice(0, 24)}`}>
-          <Icon size={17} className={tone === 'bad' ? '' : cls} aria-hidden="true" />
-          <span>{item}</span>
-        </li>
-      ))}
-    </ul>
+      )}
+    </div>
   );
 }
 
@@ -66,6 +29,8 @@ export default function AnalysisResult() {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const [analysis, setAnalysis] = useState(null);
   const [error, setError] = useState('');
@@ -94,166 +59,202 @@ export default function AnalysisResult() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `careerlens-analysis-${analysis.id}.json`;
+    a.download = `debugmycv-analysis-${analysis.id}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success('Result downloaded.');
   };
 
-  if (loading) return <div className="container page"><LoadingSpinner label="Loading analysis…" /></div>;
+  if (loading) {
+    return (
+      <div className="container page">
+        <LoadingSpinner label="Loading report…" />
+      </div>
+    );
+  }
 
   if (error) {
     return (
       <div className="container page stack">
         <ErrorMessage onRetry={load}>{error}</ErrorMessage>
-        <div className="row">
-          <GhostButton type="button" onClick={() => navigate('/history')}>
-            <ArrowLeft size={16} aria-hidden="true" /> Back to history
-          </GhostButton>
+        <div className="margin-note">
+          <p className="margin-note-title">Error</p>
+          <p>{error}</p>
+          <button type="button" className="btn" onClick={load} aria-label="Retry loading this report">
+            Retry
+          </button>
         </div>
       </div>
     );
   }
 
   const r = analysis.result || {};
-  const requirements = r.requirements || [];
+  const score = analysis.matchScore ?? (r.score ?? 0);
 
   return (
-    <div className="container page animate-in stack" style={{ gap: 24 }}>
-      <div className="page-head" style={{ marginBottom: 0 }}>
-        <div className="stack" style={{ gap: 6 }}>
-          <GhostButton type="button" onClick={() => navigate('/history')} style={{ alignSelf: 'flex-start' }}>
-            <ArrowLeft size={16} aria-hidden="true" /> History
-          </GhostButton>
-          <h1>
-            Match <span className="violet">analysis</span>
-          </h1>
-          <div className="meta-row">
-            <span>Resume: {analysis.resumeName}</span>
-            <span>Job: {analysis.jobLabel}</span>
-            <span>{fmtDate(analysis.createdAt)}</span>
-            <span>Model: {analysis.modelName}</span>
-          </div>
+    <div className="container results">
+      <header className="header">
+        <div className="header-left">
+          <h1 className="header-title">{`${isDark ? 'Results' : 'Analysis results'}`}</h1>
         </div>
-        <div className="row">
-          <GhostButton type="button" onClick={downloadJson}>
-            <Download size={16} aria-hidden="true" /> Export JSON
-          </GhostButton>
-          <Link to="/analyze" className="btn btn-primary">
-            <ScanSearch size={17} strokeWidth={1.75} aria-hidden="true" /> New analysis
+        <nav className="header-right" aria-label="Results">
+          <Link to="/analyze" className="header-link">
+            Upload new resume
           </Link>
-        </div>
-      </div>
+          <Link to="/analyze" className="header-link">
+            Download report
+          </Link>
+        </nav>
+      </header>
 
-      {/* Score hero */}
-      <GlassCard strong className="result-hero">
-        <MatchScore score={analysis.matchScore} size={180} />
-        <div className="result-copy">
-          <div className="row" style={{ gap: 10 }}>
-            <h2 style={{ margin: 0 }}>{scoreLabel(analysis.matchScore)}</h2>
-            <StatusBadge tone={analysis.matchScore >= 70 ? 'success' : analysis.matchScore >= 45 ? 'neutral' : 'warn'}>
-              Estimate only
-            </StatusBadge>
-          </div>
-          <p className="muted">{r.scoreExplanation || 'No explanation was returned for this score.'}</p>
-          <p className="hint">
-            This score is computed on the server from matched, related and missing skills plus demonstrated job
-            requirements. It is an estimate — not a hiring decision or guarantee.
+      <div className="results-top">
+        <div className="results-top-left">
+          <p className="results-meta">
+            Report · {analysis.resumeName || 'deleted resume'}
           </p>
         </div>
-      </GlassCard>
-
-      {r.resumeSummary && (
-        <GlassCard className="stack" style={{ gap: 6 }}>
-          <h2 className="card-title">Candidate snapshot</h2>
-          <p className="muted">{r.resumeSummary}</p>
-        </GlassCard>
-      )}
-
-      <div className="grid-2">
-        <Section icon={CheckCircle2} tone="mint" title="Matched skills">
-          <SkillTagList items={r.matchedSkills} kind="matched" emptyLabel="No clearly matched skills found." />
-        </Section>
-
-        <Section icon={XCircle} tone="pink" title="Missing skills">
-          <SkillTagList items={r.missingSkills} kind="missing" emptyLabel="Nothing missing — good coverage." />
-        </Section>
-
-        <Section icon={Sparkles} tone="" title="Related / transferable skills">
-          <SkillTagList items={r.relatedSkills} kind="related" emptyLabel="No related skills identified." />
-        </Section>
-
-        <Section icon={KeyRound} tone="cream" title="Suggested keywords">
-          <SkillTagList
-            items={r.suggestedKeywords}
-            kind="keyword"
-            emptyLabel="No extra keywords suggested."
-          />
-          <p className="hint">Only add keywords that are genuinely true for your experience.</p>
-        </Section>
-      </div>
-
-      <div className="grid-2">
-        <Section icon={CheckCircle2} tone="mint" title="Resume strengths">
-          <Bullets items={r.strengths} empty="No specific strengths were identified." />
-        </Section>
-
-        <Section icon={Lightbulb} tone="sky" title="Improvement suggestions">
-          <Bullets items={r.improvements} tone="idea" empty="No improvements were suggested." />
-        </Section>
-      </div>
-
-      <Section icon={Target} tone="pink" title="Job requirements not demonstrated">
-        {requirements.length > 0 ? (
-          <ul className="bullet-list">
-            {requirements.map((req, i) => (
-              <li key={`${i}-${req.requirement.slice(0, 24)}`}>
-                {req.demonstrated ? (
-                  <CheckCircle2 size={17} className="violet" aria-hidden="true" />
-                ) : (
-                  <XCircle size={17} aria-hidden="true" style={{ color: '#e05260' }} />
-                )}
-                <span>
-                  {req.requirement}{' '}
-                  <StatusBadge tone={req.demonstrated ? 'success' : 'warn'}>
-                    {req.demonstrated ? 'Demonstrated' : 'Not demonstrated'}
-                  </StatusBadge>
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : r.requirementsNotMet?.length ? (
-          <Bullets items={r.requirementsNotMet} tone="bad" />
-        ) : (
-          <p className="muted small">The model did not break the job description into requirements.</p>
-        )}
-        {r.requirementsNotMet?.length > 0 && requirements.length > 0 && (
-          <details>
-            <summary className="label" style={{ cursor: 'pointer', marginTop: 4 }}>
-              Narrative summary of unmet requirements
-            </summary>
-            <div style={{ marginTop: 8 }}>
-              <Bullets items={r.requirementsNotMet} tone="bad" />
+        <div className="results-top-right">
+          <div className="score-block">
+            <p className="score-label">Overall score</p>
+            <h1
+              className="score-value"
+              aria-label={`Overall score ${score} out of 100`}
+            >
+              {score}
+              <span className="score-out-of">/ 100</span>
+            </h1>
+          </div>
+          <div className="scale">
+            <div className="scale-baseline">
+              <div
+                className="scale-pointer"
+                style={{ left: `${(score / 100) * 100}%` }}
+              />
             </div>
-          </details>
-        )}
-      </Section>
-
-      <Section icon={MessageSquareQuote} tone="" title="Interview preparation questions">
-        <Bullets items={r.interviewQuestions} tone="idea" empty="No questions were generated." />
-      </Section>
-
-      <div className="row" style={{ justifyContent: 'center' }}>
-        <Link to="/analyze" className="btn btn-primary">
-          <ScanSearch size={17} strokeWidth={1.75} aria-hidden="true" /> Analyse another pair
-        </Link>
-        <Link to="/dashboard" className="btn btn-ghost">
-          Dashboard
-        </Link>
-        <Link to="/history" className="btn btn-ghost">
-          All history
-        </Link>
+            <p className="scale-pointer-label">{score}%</p>
+            <p className="scale-label">0</p>
+            <p className="scale-label">50</p>
+            <p className="scale-label">100</p>
+          </div>
+        </div>
       </div>
+
+      <div className="sub-scores">
+        {r.impact !== undefined && (
+          <div className="sub-score">
+            <p className="sub-score-label">Impact</p>
+            <p className="sub-score-value">{r.impact}</p>
+            <div className="sub-score-track">
+              <div className="sub-score-fill" style={{ width: `${Math.min(100, Math.max(0, Number(r.impact) || 0))}%` }} />
+            </div>
+          </div>
+        )}
+        {r.clarity !== undefined && (
+          <div className="sub-score">
+            <p className="sub-score-label">Clarity</p>
+            <p className="sub-score-value">{r.clarity}</p>
+            <div className="sub-score-track">
+              <div className="sub-score-fill" style={{ width: `${Math.min(100, Math.max(0, Number(r.clarity) || 0))}%` }} />
+            </div>
+          </div>
+        )}
+        {r.structure !== undefined && (
+          <div className="sub-score">
+            <p className="sub-score-label">Structure</p>
+            <p className="sub-score-value">{r.structure}</p>
+            <div className="sub-score-track">
+              <div className="sub-score-fill" style={{ width: `${Math.min(100, Math.max(0, Number(r.structure) || 0))}%` }} />
+            </div>
+          </div>
+        )}
+        {r.keywords !== undefined && (
+          <div className="sub-score">
+            <p className="sub-score-label">Keywords</p>
+            <p className="sub-score-value">{r.keywords}</p>
+            <div className="sub-score-track">
+              <div className="sub-score-fill" style={{ width: `${Math.min(100, Math.max(0, Number(r.keywords) || 0))}%` }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <section className="resume-notes">
+        <SectionHead label="01 / Summary" icon={Link} />
+        <div className="resume-page-cell">
+          <p className="resume-page-label">Resume</p>
+          <p className="resume-body">{r.summary || r.resumeSummary || 'No summary was generated for this resume.'}</p>
+        </div>
+      </section>
+
+      <section className="notes-section">
+        <SectionHead label="02 / Margin notes" icon={Link} />
+        <div className="resume-notes-wrap">
+          <div className="resume-page-cell">
+            <p className="resume-page-label">Resume</p>
+            {r.findings && r.findings.length > 0 ? (
+              r.findings.map((f, i) => {
+                const kind = f.problem ? 'problem' : f.strength ? 'strength' : f.caution ? 'caution' : '';
+                const color = kind === 'problem' ? 'var(--accent)' : kind === 'strength' ? 'var(--green)' : kind === 'caution' ? 'var(--ochre)' : 'var(--ink-3)';
+                return (
+                  <div key={`f${i}`} className="resume-body">
+                    <span
+                      className={`annotated ${kind ? `annotated-${kind}` : ''}`}
+                      data-note={f.text || f.note || ''}
+                      style={{ borderBottomColor: color }}
+                    >
+                      <sup style={{ color }}>{i + 1}</sup> {f.text || f.note || ''}
+                    </span>
+                    {f.note && (
+                      <div className="note-cell">
+                        <div className="note-row">
+                          <span className="leader" aria-hidden="true" />
+                          <div>
+                            <p className="note-label" style={{ color }}>
+                              {i + 1} · {f.title || 'Note'}
+                            </p>
+                            <p className="note-text">{f.note}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <p className="resume-body">No margin notes were generated for this resume.</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="rewrites">
+        <SectionHead label="03 / Tracked rewrites" icon={Sparkles} />
+        {r.rewritePairs && r.rewritePairs.length > 0 ? (
+          <div className="rewrite-rows">
+            {r.rewritePairs.map((pair, i) => (
+              <div key={`p${i}`} className="rewrite-row">
+                <p className="rewrite-note">Note {i + 1}</p>
+                <p className="rewrite-original">{pair.original || 'No original line supplied.'}</p>
+                <p className="rewrite-improved">{pair.improved || 'No improved line supplied.'}</p>
+                <div className="rewrite-actions">
+                  <GhostButton type="button">Copy rewrite</GhostButton>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">No tracked rewrites were generated for this resume.</p>
+        )}
+        <div className="rewrite-actions">
+          <Link to="/analyze" className="btn">
+            Download report
+          </Link>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <p>DebugMyCV · your resume analysed · {score} out of 100.</p>
+      </footer>
     </div>
   );
 }

@@ -1,24 +1,33 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import multer from 'multer';
 import crypto from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { extractPdfText } from './pdf.service.js';
 
-const ROOT = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '../..');
-export const STORAGE_DIR = path.join(ROOT, 'private_uploads');
-
-await fs.mkdir(STORAGE_DIR, { recursive: true });
-
-/** Stores a buffer under a generated UUID. User filenames are never used as paths. */
+/** Stores a PDF buffer in memory (no disk), extracts text, and discards the
+ *  buffer after analysis. Used for Vercel's ephemeral function environment. */
 export async function storeFile(buffer) {
   const id = crypto.randomUUID();
-  const filePath = path.join(STORAGE_DIR, `${id}.pdf`);
-  await fs.writeFile(filePath, buffer, { flag: 'wx', mode: 0o600 });
-  return { storageIdentifier: id, filePath };
+  return { storageIdentifier: id };
 }
 
 export async function deleteStoredFile(storageIdentifier) {
-  if (!/^[0-9a-f-]{36}$/i.test(storageIdentifier)) return;
-  await fs.rm(path.join(STORAGE_DIR, `${storageIdentifier}.pdf`), { force: true }).catch(() => {});
+  // No on-disk file to remove: the buffer is garbage-collected after the
+  // route handler returns.
 }
 
 export const sha256 = (buffer) => crypto.createHash('sha256').update(buffer).digest('hex');
+
+export const multerUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 0, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const mimeOk = ['application/pdf', 'application/octet-stream'].includes(file.mimetype);
+    if (mimeOk) return cb(null, true);
+    cb(new Error('Only PDF files are accepted.'));
+  },
+});
+
+/** Extracts text and removes the buffer from scope afterwards. */
+export async function processResume(buffer, originalName) {
+  const text = await extractPdfText(buffer);
+  return { storageIdentifier: crypto.randomUUID(), text };
+}

@@ -1,26 +1,23 @@
-import mysql from 'mysql2/promise';
+import pg from 'pg';
 import { env } from './env.js';
 
-export const pool = mysql.createPool({
+export const { Pool } = pg;
+
+export const pool = new Pool({
   host: env.DB_HOST,
   port: env.DB_PORT,
   database: env.DB_NAME,
   user: env.DB_USER,
   password: env.DB_PASSWORD,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  charset: 'utf8mb4',
-  timezone: 'Z',
-  dateStrings: true,
+  max: 3, // Supabase pooled connection limit (1-3)
+  ssl: { rejectUnauthorized: false }, // Supabase requires SSL
+  connectionTimeoutMillis: 5000,
 });
 
+// Postgres returns TIMESTAMPTZ as proper Date (UTC-aware). No connection-level
+// time_zone override is needed.
+
 export async function verifyDatabase() {
-  const conn = await pool.getConnection();
-  try {
-    await conn.query('SELECT 1');
-  } finally {
-    conn.release();
-  }
+  const res = await pool.query('SELECT 1 AS ok');
+  return res.rows[0].ok;
 }
