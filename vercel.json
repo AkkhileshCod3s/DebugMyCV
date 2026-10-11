@@ -18,8 +18,10 @@
       }
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/((?!api/).*)",
+      "destination": {
+        "service": "client"
+      }
     }
   ]
 }
