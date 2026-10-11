@@ -1,14 +1,15 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Navbar } from './components/Navbar.jsx';
-import { Footer } from './components/Footer.jsx';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import LandingNav from './components/LandingNav.jsx';
 import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { LoadingSpinner } from './components/ui.jsx';
 import Landing from './pages/Landing.jsx';
+import CookieBanner from './components/CookieBanner.jsx';
 
-const Login = lazy(() => import('./pages/Login.jsx'));
-const Register = lazy(() => import('./pages/Register.jsx'));
+const SampleReport = lazy(() => import('./pages/SampleReport.jsx'));
+const Privacy = lazy(() => import('./pages/Privacy.jsx'));
+const Cookies = lazy(() => import('./pages/Cookies.jsx'));
 const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const Analyze = lazy(() => import('./pages/Analyze.jsx'));
 const AnalysisResult = lazy(() => import('./pages/AnalysisResult.jsx'));
@@ -25,19 +26,33 @@ function PageFallback() {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const isLanding =
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/sample' ||
+    pathname === '/privacy' ||
+    pathname === '/cookies';
+
   return (
     <>
-      <a className="skip-link" href="#main">
-        Skip to main content
-      </a>
-      <Navbar />
+      {!isLanding && (
+        <a className="skip-link" href="#main">
+          Skip to main content
+        </a>
+      )}
+      {!isLanding && <LandingNav variant="app" />}
       <main id="main">
         <ErrorBoundary>
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Landing />} />
+              <Route path="/register" element={<Landing />} />
+              <Route path="/sample" element={<SampleReport />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/cookies" element={<Cookies />} />
               <Route
                 path="/dashboard"
                 element={
@@ -84,7 +99,7 @@ export default function App() {
           </Suspense>
         </ErrorBoundary>
       </main>
-      <Footer />
+      <CookieBanner />
     </>
   );
 }

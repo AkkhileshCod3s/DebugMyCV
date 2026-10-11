@@ -24,6 +24,16 @@ const fmtDate = (iso) =>
 
 const PAGE_SIZE = 10;
 
+const remainingTime = (iso) => {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  if (!Number.isFinite(ms)) return null;
+  const total = Math.max(0, Math.floor(ms / 60000));
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  return hours > 0 ? `${hours}h ${mins}m left` : `${mins}m left`;
+};
+
 export default function History() {
   const [searchParams, setSearchParams] = useSearchParams();
   const toast = useToast();
@@ -86,13 +96,15 @@ export default function History() {
   };
 
   return (
-    <div className="container page animate-in stack" style={{ gap: 20 }}>
-      <div className="page-head" style={{ marginBottom: 0 }}>
-        <div className="stack" style={{ gap: 6 }}>
+    <div className="container page app-page animate-in stack g20">
+      <div className="page-head mb0">
+        <div className="stack g6">
+          <span className="page-eyebrow">01 / History</span>
           <h1>
-            Analysis <span className="violet">history</span>
+            Analysis <span className="text-accent">history</span>
           </h1>
-          <p className="muted">{total} analysis{total === 1 ? '' : 'es'} saved to your account.</p>
+          <p className="page-lede">{total} analysis{total === 1 ? '' : 'es'} saved to your account.</p>
+          <p className="hint">Reports are deleted automatically 24 hours after analysis.</p>
         </div>
         <Link to="/analyze" className="btn btn-primary">
           New analysis
@@ -111,9 +123,8 @@ export default function History() {
             placeholder="Search by job label or resume…"
             defaultValue={query}
             onChange={(e) => setParam('q', e.target.value)}
-            style={{ paddingLeft: 42 }}
           />
-          <span className="input-action" style={{ left: 10, right: 'auto' }} aria-hidden="true">
+          <span className="input-action" aria-hidden="true">
             <Search size={17} />
           </span>
         </div>
@@ -145,14 +156,14 @@ export default function History() {
           />
         </GlassCard>
       ) : (
-        <div className="stack" style={{ gap: 14 }}>
+        <div className="stack g14">
           {filtered.map((a) => (
             <article key={a.id} className="history-item">
               <span className="score-chip" aria-label={`Score ${a.matchScore} out of 100`}>
                 {a.matchScore}
               </span>
               <div className="history-body">
-                <div className="row" style={{ gap: 10 }}>
+                <div className="row g10">
                   <strong>{a.jobLabel}</strong>
                   <StatusBadge tone={a.matchScore >= 70 ? 'success' : a.matchScore >= 45 ? 'neutral' : 'warn'}>
                     {scoreLabel(a.matchScore)}
@@ -160,6 +171,7 @@ export default function History() {
                 </div>
                 <span className="muted small">
                   {a.resumeName} · {fmtDate(a.createdAt)}
+                  {remainingTime(a.expiresAt) ? ` · ${remainingTime(a.expiresAt)}` : ''}
                 </span>
               </div>
               <div className="history-actions">
@@ -168,7 +180,7 @@ export default function History() {
                 </Link>
                 <button
                   type="button"
-                  className="btn btn-danger btn-sm"
+                  className="btn btn-secondary btn-sm"
                   onClick={() => setPendingDelete(a)}
                   aria-label={`Delete analysis for ${a.jobLabel}`}
                 >

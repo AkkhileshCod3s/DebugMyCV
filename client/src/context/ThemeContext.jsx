@@ -1,45 +1,57 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext(null);
-const STORAGE_KEY = 'careerlens-theme';
+const STORAGE_KEY = 'debugmycv-theme';
 
 function getInitialTheme() {
-  const saved = localStorage.getItem(STORAGE_KEY);
+  let saved = null;
+  try {
+    saved = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    saved = null;
+  }
   if (saved === 'light' || saved === 'dark') return saved;
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+  } catch {
+    /* ignore */
+  }
+  return 'light';
 }
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme);
+  const [nightProof, setNightProof] = useState(false);
 
+  // Flips the theme; the effect below persists it.
   const toggle = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), []);
 
+  const toggleNightProof = useCallback(() => setNightProof((m) => !m), []);
+
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem(STORAGE_KEY, theme);
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      /* ignore */
+    }
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', theme === 'dark' ? '#14130F' : '#F4F1EA');
   }, [theme]);
 
-  const [manualOverride, setManualOverride] = useState(false);
-
-  // "Night proof" manual toggle: when on, ignores prefers-color-scheme and forces
-  // the chosen theme even if the user's OS colorscheme changes.
+  // Night proof off: follow OS preference changes. On: keep the chosen theme.
   useEffect(() => {
-    if (!manualOverride) return;
+    if (nightProof) return undefined;
+    if (!window.matchMedia) return undefined;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => {
-      if (theme === 'dark') return;
-      setTheme('dark');
-    };
+    const onChange = (e) => setTheme(e.matches ? 'dark' : 'light');
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
-  }, [theme]);
-
-  const toggleNightProof = useCallback(() => setManualOverride((m) => !m), []);
+  }, [nightProof]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle, nightProof: manualOverride, toggleNightProof }}>
+    <ThemeContext.Provider value={{ theme, toggle, nightProof, toggleNightProof }}>
       {children}
     </ThemeContext.Provider>
   );

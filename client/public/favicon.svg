@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>DebugMyCV</title>
+  <rect width="32" height="32" fill="#17150F"/>
+  <path d="M22 13V5H8v22h14v-8" fill="none" stroke="#F4F1EA" stroke-width="2"/>
+  <path d="M12 10h6M12 22h6" fill="none" stroke="#F4F1EA" stroke-width="2"/>
+  <path d="M12 16h14" fill="none" stroke="#E0583F" stroke-width="2"/>
+  <circle cx="27" cy="16" r="2.5" fill="#E0583F"/>
+</svg>

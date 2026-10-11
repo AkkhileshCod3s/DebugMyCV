@@ -83,4 +83,21 @@ CREATE TABLE IF NOT EXISTS sessions (
   CONSTRAINT sessions_pkey PRIMARY KEY (session_id)
 );
 
+-- ── 24-hour auto-delete retention (idempotent) ─────────────────────────────────
+ALTER TABLE analyses     ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+ALTER TABLE resumes      ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+ALTER TABLE job_descriptions ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+
+-- Deleting a resume or job description now cascades to its analyses.
+ALTER TABLE analyses DROP CONSTRAINT IF EXISTS fk_analyses_resume;
+ALTER TABLE analyses DROP CONSTRAINT IF EXISTS fk_analyses_job;
+ALTER TABLE analyses
+  ADD CONSTRAINT fk_analyses_resume FOREIGN KEY (resume_id) REFERENCES resumes(id) ON DELETE CASCADE;
+ALTER TABLE analyses
+  ADD CONSTRAINT fk_analyses_job FOREIGN KEY (job_description_id) REFERENCES job_descriptions(id) ON DELETE CASCADE;
+
+-- ── Consent records (idempotent) ───────────────────────────────────────────────
+ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_at      timestamptz;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_version text;
+
 COMMIT;

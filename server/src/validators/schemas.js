@@ -10,6 +10,13 @@ export const registerSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters.')
     .max(72, 'Password must be at most 72 characters.'),
+  consent: z
+    .boolean()
+    .refine((v) => v === true, { message: 'You must accept the Privacy Policy and Cookie Policy to register.' }),
+  consentVersion: z
+    .string()
+    .trim()
+    .min(1, 'Missing consent version. Please reload the page and try again.'),
 });
 
 export const loginSchema = z.object({
@@ -30,6 +37,11 @@ export const jobSchema = z.object({
 export const analyzeSchema = z.object({
   resumeId: z.coerce.number().int().positive('Select a resume.'),
   jobDescriptionId: z.coerce.number().int().positive('Select a job description.'),
+  aiConsent: z
+    .boolean()
+    .refine((v) => v === true, {
+      message: 'AI processing consent is required to run an analysis.',
+    }),
 });
 
 export const idParamSchema = z.object({ id: z.coerce.number().int().positive() });

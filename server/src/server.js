@@ -1,6 +1,11 @@
-import { createApp } from './app.js';
+import 'dotenv/config';
 import { env, validateConfig } from './config/env.js';
+import { createApp } from './app.js';
 import { pool, verifyDatabase } from './config/db.js';
+import { purgeExpired } from './services/cleanup.service.js';
+
+process.on('unhandledRejection', (e) => console.error('[unhandledRejection]', e));
+process.on('uncaughtException', (e) => console.error('[uncaughtException]', e));
 
 async function main() {
   try {
@@ -14,11 +19,14 @@ async function main() {
     await verifyDatabase();
     console.log();
   } catch (err) {
-    console.error(
-      `[db] Could not connect to database (${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}): ${err.code || err.message}`,
-    );
-    console.error('[db] Check DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD in .env and run scripts/db-setup.mjs.');
+    console.error(`[db] Could not connect to database: ${err.code || err.message}`);
     process.exit(1);
+  }
+
+  // 24-hour auto-delete: purge once at start, then hourly (long-lived process only).
+  await purgeExpired();
+  if (!process.env.VERCEL) {
+    setInterval(() => purgeExpired(), 60 * 60 * 1000);
   }
 
   const app = createApp();

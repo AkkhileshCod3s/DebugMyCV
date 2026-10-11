@@ -32,6 +32,11 @@ async function request(path, { method = 'GET', body, formData, signal } = {}) {
   }
 
   if (!res.ok) {
+    if (res.status === 401 && !path.startsWith('/auth/')) {
+      // Session expired on a protected endpoint: drop client state and return
+      // to the landing page. Auth endpoints keep their own 401 handling.
+      window.location.replace('/');
+    }
     const e = new Error(data?.message || `Request failed (${res.status}).`);
     e.status = res.status;
     e.details = data?.details;

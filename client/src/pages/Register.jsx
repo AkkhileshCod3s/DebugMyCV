@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, UserPlus, Sparkles } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, UserPlus, User, Mail, Lock } from 'lucide-react';
 import { GlassCard, PrimaryButton, InputField, ErrorMessage } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -9,6 +9,7 @@ export default function Register() {
   const { register } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
   const [errors, setErrors] = useState({});
@@ -36,7 +37,7 @@ export default function Register() {
     setSubmitting(true);
     try {
       await register({ name: form.name.trim(), email: form.email, password: form.password });
-      toast.success('Account created — welcome to CareerLens AI!');
+      toast.success('Account created — welcome to DebugMyCV!');
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setApiError(err.message || 'Could not create your account. Please try again.');
@@ -46,49 +47,63 @@ export default function Register() {
   };
 
   return (
-    <div className="container auth-wrap">
-      <GlassCard className="auth-card animate-in" strong>
-        <div className="auth-head">
-          <span className="icon-badge" aria-hidden="true" style={{ margin: '0 auto' }}>
-            <Sparkles size={22} strokeWidth={1.75} />
+    <div className="sheet-wrap">
+      <GlassCard className="sheet-card animate-in" strong>
+        <div className="sheet-head">
+          <span className="sheet-icon" aria-hidden="true">
+            <UserPlus size={22} strokeWidth={1.5} color="currentColor" aria-hidden="true" />
           </span>
-          <h1 style={{ fontSize: '1.7rem' }}>Create your account</h1>
-          <p className="muted small">Free to start. Your resumes stay private to your account.</p>
+          <h1 className="sheet-title">Create account</h1>
+          <p className="sheet-sub">Free to start. Your resumes stay private to your account.</p>
         </div>
 
         <ErrorMessage>{apiError}</ErrorMessage>
 
-        <form className="stack" onSubmit={onSubmit} noValidate>
-          <InputField
-            label="Full name"
-            name="name"
-            autoComplete="name"
-            placeholder="Ada Lovelace"
-            required
-            value={form.name}
-            onChange={set('name')}
-            error={errors.name}
-          />
-          <InputField
-            label="Email"
-            type="email"
-            name="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            required
-            value={form.email}
-            onChange={set('email')}
-            error={errors.email}
-          />
+        <form className="sheet-form" onSubmit={onSubmit} noValidate>
+          <div className="field">
+            <span className="field-label">
+              <User size={15} strokeWidth={1.5} color="currentColor" aria-hidden="true" />
+              Full name
+            </span>
+            <InputField
+              label=""
+              name="name"
+              autoComplete="name"
+              placeholder="Ada Lovelace"
+              required
+              value={form.name}
+              onChange={set('name')}
+              error={errors.name}
+            />
+          </div>
 
           <div className="field">
-            <label className="label" htmlFor="reg-password">
-              Password <span className="req" aria-hidden="true">*</span>
-            </label>
-            <div className="input-wrap">
+            <span className="field-label">
+              <Mail size={15} strokeWidth={1.5} color="currentColor" aria-hidden="true" />
+              Email
+            </span>
+            <InputField
+              label=""
+              type="email"
+              name="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              required
+              value={form.email}
+              onChange={set('email')}
+              error={errors.email}
+            />
+          </div>
+
+          <div className="field">
+            <span className="field-label">
+              <Lock size={15} strokeWidth={1.5} color="currentColor" aria-hidden="true" />
+              Password
+            </span>
+            <div className="field-input-wrap">
               <input
                 id="reg-password"
-                className="input"
+                className="field-input"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 autoComplete="new-password"
@@ -101,28 +116,20 @@ export default function Register() {
               />
               <button
                 type="button"
-                className="input-action"
+                className="field-input-action"
                 onClick={() => setShowPassword((s) => !s)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={18} strokeWidth={1.5} color="currentColor" aria-hidden="true" /> : <Eye size={18} strokeWidth={1.5} color="currentColor" aria-hidden="true" />}
               </button>
             </div>
-            {!errors.password && (
-              <span className="hint" id="reg-password-hint">
-                At least 8 characters.
-              </span>
-            )}
-            {errors.password && (
-              <span className="field-error" id="reg-password-error" role="alert">
-                {errors.password}
-              </span>
-            )}
+            <span className="hint">At least 8 characters.</span>
+            {errors.password && <span className="field-error" id="reg-password-error" role="alert">{errors.password}</span>}
           </div>
 
           <InputField
-            label="Confirm password"
+            label=""
             type={showPassword ? 'text' : 'password'}
             name="confirm"
             autoComplete="new-password"

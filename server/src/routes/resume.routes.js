@@ -26,21 +26,13 @@ const upload = multer({
   },
 });
 
-const resumeMeta = (r) => ({
-  id: r.id,
-  originalFilename: r.original_filename,
-  fileSize: r.file_size,
-  uploadedAt: r.uploaded_at,
-  textLength: Number(r.text_length ?? (r.extracted_text ? r.extracted_text.length : 0)),
-});
-
 async function insertResume({ userId, originalFilename, storageIdentifier, text, fileSize, hash }) {
-  const [result] = await pool.query(
+  const result = await pool.query(
     `INSERT INTO resumes (user_id, original_filename, storage_identifier, extracted_text, file_size, content_hash)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
     [userId, originalFilename, storageIdentifier, text, fileSize, hash],
   );
-  return result.insertId;
+  return result.rows[0].id;
 }
 
 // ── POST /api/resumes/upload ────────────────────────────────────────────────
@@ -51,6 +43,9 @@ router.post(
   asyncHandler(async (req, res) => {
     const file = req.file;
     if (!file) throw badRequest('Choose a PDF resume to upload.');
+    if (req.body?.aiConsent !== 'true') {
+      throw badRequest('AI processing consent is required before uploading a resume for analysis.');
+    }
     validatePdfBuffer(file.buffer, file.originalname);
 
     // Quota is reserved only after the file passed size/type/signature checks.
@@ -125,52 +120,18 @@ router.post(
   }),
 );
 
-// ── GET /api/resumes ────────────────────────────────────────────────────────
-router.get(
-  '/',
-  asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(
-      `SELECT id, original_filename, file_size, uploaded_at, CHAR_LENGTH(extracted_text) AS text_length
-       FROM resumes WHERE user_id = ? ORDER BY uploaded_at DESC LIMIT 100`,
-      [req.userId],
-    );
-    res.json({
-      success: true,
-      resumes: rows.map(resumeMeta),
-      usage: await getDailyUsage(req.userId),
-    });
-  }),
-);
-
-// ── GET /api/resumes/:id ────────────────────────────────────────────────────
-router.get(
-  '/:id',
-  validateParams(idParamSchema),
-  asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(
-      `SELECT id, original_filename, file_size, uploaded_at, extracted_text,
-              CHAR_LENGTH(extracted_text) AS text_length
-       FROM resumes WHERE id = ? AND user_id = ? LIMIT 1`,
-      [req.params.id, req.userId],
-    );
-    if (!rows[0]) throw notFound('Resume not found.');
-    const { extracted_text, ...rest } = rows[0];
-    res.json({ success: true, resume: resumeMeta(rest), text: extracted_text });
-  }),
-);
-
 // ── DELETE /api/resumes/:id ─────────────────────────────────────────────────
 router.delete(
   '/:id',
   validateParams(idParamSchema),
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(
-      'SELECT storage_identifier FROM resumes WHERE id = ? AND user_id = ? LIMIT 1',
+    const resumeRes = await pool.query(
+      'SELECT storage_identifier FROM resumes WHERE id = $1 AND user_id = $2 LIMIT 1',
       [req.params.id, req.userId],
     );
-    if (!rows[0]) throw notFound('Resume not found.');
-    await pool.query('DELETE FROM resumes WHERE id = ? AND user_id = ?', [req.params.id, req.userId]);
-    await deleteStoredFile(rows[0].storage_identifier).catch(() => {});
+    if (!resumeRes.rows[0]) throw notFound('Resume not found.');
+    await pool.query('DELETE FROM resumes WHERE id = $1 AND user_id = $2', [req.params.id, req.userId]);
+    await deleteStoredFile(resumeRes.rows[0].storage_identifier).catch(() => {});
     res.json({ success: true });
   }),
 );

@@ -15,5 +15,11 @@
       "src": "/(.*)",
       "dest": "/api/app.js"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/purge",
+      "schedule": "0 3 * * *"
+    }
   ]
 }

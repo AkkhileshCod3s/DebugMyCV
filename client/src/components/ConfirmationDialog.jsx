@@ -36,8 +36,8 @@ export function ConfirmationDialog({
         aria-describedby="dialog-desc"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="row" style={{ gap: 12 }}>
-          <span className="icon-badge pink" aria-hidden="true">
+        <div className="row">
+          <span className="icon-badge" aria-hidden="true">
             <AlertTriangle size={20} strokeWidth={1.75} />
           </span>
           <h3 id="dialog-title">{title}</h3>

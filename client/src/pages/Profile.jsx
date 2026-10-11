@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, Lock, ShieldCheck, LogOut, Save, Sparkles } from 'lucide-react';
 import {
   GlassCard,
@@ -12,6 +12,7 @@ import {
 import { UsageQuotaIndicator } from '../components/UsageQuotaIndicator.jsx';
 import { ConfirmationDialog } from '../components/ConfirmationDialog.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { resetConsent } from '../utils/consent.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { api } from '../services/api.js';
 
@@ -101,13 +102,14 @@ export default function Profile() {
   };
 
   return (
-    <div className="container page animate-in stack" style={{ gap: 24 }}>
-      <div className="page-head" style={{ marginBottom: 0 }}>
-        <div className="stack" style={{ gap: 6 }}>
+    <div className="container page app-page animate-in stack g24">
+      <div className="page-head mb0">
+        <div className="stack g6">
+          <span className="page-eyebrow">01 / Profile</span>
           <h1>
-            Profile &amp; <span className="violet">settings</span>
+            Profile &amp; <span className="text-accent">settings</span>
           </h1>
-          <p className="muted">Manage your account details, security and daily usage.</p>
+          <p className="page-lede">Manage your account details, security and daily usage.</p>
         </div>
       </div>
 
@@ -117,8 +119,8 @@ export default function Profile() {
         {/* Account details */}
         <GlassCard className="stack" as="section" aria-labelledby="account-heading">
           <h2 id="account-heading" className="card-title">
-            <span className="icon-badge" aria-hidden="true">
-              <User size={19} strokeWidth={1.75} />
+            <span className="icon-box" aria-hidden="true">
+              <User size={20} strokeWidth={1.5} />
             </span>
             Account
           </h2>
@@ -127,7 +129,7 @@ export default function Profile() {
             <SkeletonLoader lines={4} />
           ) : (
             <>
-              <dl style={{ margin: 0 }}>
+              <dl>
                 <div className="detail-row">
                   <dt>Email</dt>
                   <dd>{profile.email}</dd>
@@ -164,8 +166,8 @@ export default function Profile() {
         {/* Security */}
         <GlassCard className="stack" as="section" aria-labelledby="security-heading">
           <h2 id="security-heading" className="card-title">
-            <span className="icon-badge mint" aria-hidden="true">
-              <Lock size={19} strokeWidth={1.75} />
+            <span className="icon-box" aria-hidden="true">
+              <Lock size={20} strokeWidth={1.5} />
             </span>
             Change password
           </h2>
@@ -212,18 +214,19 @@ export default function Profile() {
           </form>
         </GlassCard>
 
-        {/* Usage */}
-        <GlassCard className="stack" as="section" aria-labelledby="usage-heading">
+        {/* Usage + privacy — one bordered panel */}
+        <div className="profile-panel">
+        <section className="stack" aria-labelledby="usage-heading">
           <h2 id="usage-heading" className="card-title">
-            <span className="icon-badge sky" aria-hidden="true">
-              <Sparkles size={19} strokeWidth={1.75} className="glow" />
+            <span className="icon-box" aria-hidden="true">
+              <Sparkles size={20} strokeWidth={1.5} />
             </span>
             Daily usage
           </h2>
           {!usage ? (
             <SkeletonLoader lines={3} />
           ) : (
-            <div className="stack" style={{ gap: 16 }}>
+            <div className="stack">
               <UsageQuotaIndicator
                 title="Resume uploads"
                 used={usage.uploads.used}
@@ -241,39 +244,51 @@ export default function Profile() {
               <p className="hint">Counters reset automatically at midnight in the {usage.timezone} timezone.</p>
             </div>
           )}
-        </GlassCard>
+        </section>
 
         {/* Privacy & session */}
-        <GlassCard className="stack" as="section" aria-labelledby="privacy-heading">
+        <section className="stack" aria-labelledby="privacy-heading">
           <h2 id="privacy-heading" className="card-title">
-            <span className="icon-badge cream" aria-hidden="true">
-              <ShieldCheck size={19} strokeWidth={1.75} />
+            <span className="icon-box" aria-hidden="true">
+              <ShieldCheck size={20} strokeWidth={1.5} />
             </span>
             Privacy &amp; session
           </h2>
           <ul className="bullet-list">
             <li>
-              <ShieldCheck size={17} className="violet" aria-hidden="true" />
+              <ShieldCheck size={20} strokeWidth={1.5} aria-hidden="true" />
               <span>Your resumes, job descriptions and analyses are visible only to your account.</span>
             </li>
             <li>
-              <ShieldCheck size={17} className="violet" aria-hidden="true" />
+              <ShieldCheck size={20} strokeWidth={1.5} aria-hidden="true" />
               <span>Passwords are hashed with bcrypt; the server never stores or logs plaintext passwords.</span>
             </li>
             <li>
-              <ShieldCheck size={17} className="violet" aria-hidden="true" />
+              <ShieldCheck size={20} strokeWidth={1.5} aria-hidden="true" />
               <span>Uploaded files live in private storage and are deleted when you remove the resume.</span>
             </li>
             <li>
-              <ShieldCheck size={17} className="violet" aria-hidden="true" />
+              <ShieldCheck size={20} strokeWidth={1.5} aria-hidden="true" />
               <span>The AI provider only receives resume and job text during analysis — never your credentials.</span>
             </li>
           </ul>
-          <GhostButton type="button" onClick={() => setConfirmLogout(true)} style={{ alignSelf: 'flex-start' }}>
-            <LogOut size={16} strokeWidth={1.75} aria-hidden="true" />
-            Sign out {user?.name ? `(${user.name.split(' ')[0]})` : ''}
+          <p className="legal-links">
+            <Link to="/privacy">Privacy Policy</Link>
+            {' · '}
+            <Link to="/cookies">Cookie Policy</Link>
+          </p>
+          <GhostButton type="button" className="self-start" onClick={() => resetConsent()}>
+            Cookie settings
           </GhostButton>
-        </GlassCard>
+          <div className="danger-zone">
+            <p className="page-section-label">Danger zone</p>
+            <GhostButton type="button" onClick={() => setConfirmLogout(true)} className="self-start">
+              <LogOut size={16} strokeWidth={1.75} aria-hidden="true" />
+              Sign out {user?.name ? `(${user.name.split(' ')[0]})` : ''}
+            </GhostButton>
+          </div>
+        </section>
+        </div>
       </div>
 
       <ConfirmationDialog

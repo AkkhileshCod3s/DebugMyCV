@@ -47,8 +47,8 @@ const Button = forwardRef(function Button(
 
 export const PrimaryButton = (props) => <Button variant="primary" {...props} />;
 export const SecondaryButton = (props) => <Button variant="secondary" {...props} />;
-export const GhostButton = (props) => <Button variant="ghost" {...props} />;
-export const DangerButton = (props) => <Button variant="danger" {...props} />;
+export const GhostButton = (props) => <Button variant="secondary" {...props} />;
+export const DangerButton = (props) => <Button variant="secondary" {...props} />;
 
 /* ── InputField ────────────────────────────────────────────────────────────── */
 export function InputField({ label, error, hint, required, id, ...rest }) {
@@ -165,11 +165,10 @@ export function ErrorMessage({ children, onRetry }) {
   return (
     <div className="alert alert-error" role="alert">
       <AlertCircle size={18} aria-hidden="true" />
-      <span style={{ flex: 1 }}>{children}</span>
-      {onRetry && (
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onRetry}>
-          Retry
-        </button>
+      <span className="alert-body">{children}</span>
+      {onRetry && (                <button type="button" className="btn btn-secondary btn-sm" onClick={onRetry}>
+                  Retry
+                </button>
       )}
     </div>
   );

@@ -1,25 +1,10 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Sparkles, LayoutDashboard, History, User, LogOut, Sun, Moon, ScanSearch } from 'lucide-react';
+import { Menu, X, LayoutDashboard, History, User, LogOut, ScanSearch } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useTheme } from '../context/ThemeContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-
-export function ThemeToggle() {
-  const { theme, toggle } = useTheme();
-  const isDark = theme === 'dark';
-  return (
-    <button
-      type="button"
-      className="btn btn-ghost btn-icon"
-      onClick={toggle}
-      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-      title={isDark ? 'Light theme' : 'Dark theme'}
-    >
-      {isDark ? <Sun size={19} strokeWidth={1.75} /> : <Moon size={19} strokeWidth={1.75} />}
-    </button>
-  );
-}
+import Logo from './Logo.jsx';
+import ThemeToggle from './ThemeToggle.jsx';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -51,11 +36,8 @@ export function Navbar() {
     <header className="navbar">
       <div className="container">
         <div className="nav-inner">
-          <Link to="/" className="brand" aria-label="CareerLens AI home">
-            <span className="brand-mark" aria-hidden="true">
-              <Sparkles size={19} strokeWidth={1.75} />
-            </span>
-            CareerLens AI
+          <Link to="/" className="brand logo-link" aria-label="DebugMyCV home">
+            <Logo size={28} />
           </Link>
 
           <nav className="nav-links nav-desktop" aria-label="Primary">
@@ -68,7 +50,7 @@ export function Navbar() {
           </nav>
 
           <div className="nav-actions">
-            <ThemeToggle />
+            {pathname !== '/sample' && <ThemeToggle />}
             {user ? (
               <>
                 <button type="button" className="btn btn-primary btn-sm nav-desktop" onClick={handleLogout}>
@@ -115,13 +97,12 @@ export function Navbar() {
             <button type="button" className="btn btn-secondary" onClick={handleLogout}>
               <LogOut size={17} strokeWidth={1.75} aria-hidden="true" />
               Sign out
-            </button>
-          ) : (
-            <NavLink to="/login" className="nav-link">
-              <User size={18} strokeWidth={1.75} aria-hidden="true" />
-              Sign in
-            </NavLink>
-          )}
+            </button>            ) : (
+              <NavLink to="/login" className="nav-link">
+                <User size={18} strokeWidth={1.75} aria-hidden="true" />
+                Sign in
+              </NavLink>
+            )}
         </nav>
       </div>
     </header>

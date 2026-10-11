@@ -7,6 +7,7 @@ import { analyzeSchema, idParamSchema } from '../validators/schemas.js';
 import { matchResumeToJob, isAiConfigured } from '../services/groq.service.js';
 import { computeMatchScore } from '../services/scoring.service.js';
 import { reserveOrFail, releaseSlot } from '../services/usage.service.js';
+import { purgeExpired } from '../services/cleanup.service.js';
 import { analyzeLimiter } from '../middleware/rateLimit.js';
 
 const router = Router();
@@ -34,17 +35,17 @@ router.post(
     }
 
     const { resumeId, jobDescriptionId } = req.body;
-    const [resumeRows] = await pool.query(
-      'SELECT id, user_id, extracted_text FROM resumes WHERE id = ? AND user_id = ? LIMIT 1',
+    const resumeRes = await pool.query(
+      'SELECT id, user_id, extracted_text FROM resumes WHERE id = $1 AND user_id = $2 LIMIT 1',
       [resumeId, req.userId],
     );
-    const [jobRows] = await pool.query(
-      'SELECT id, user_id, description_text FROM job_descriptions WHERE id = ? AND user_id = ? LIMIT 1',
+    const jobRes = await pool.query(
+      'SELECT id, user_id, description_text FROM job_descriptions WHERE id = $1 AND user_id = $2 LIMIT 1',
       [jobDescriptionId, req.userId],
     );
 
-    const resume = resumeRows[0];
-    const job = jobRows[0];
+    const resume = resumeRes.rows[0];
+    const job = jobRes.rows[0];
     if (!resume) throw notFound('Resume not found.');
     if (!job) throw notFound('Job description not found.');
     if (Number(resume.user_id) !== Number(req.userId) || Number(job.user_id) !== Number(req.userId)) {
@@ -73,17 +74,21 @@ router.post(
       const matchScore = computeMatchScore(data);
       const payload = JSON.stringify({ ...data, scoreExplanation: data.scoreExplanation || '' });
 
-      const [result] = await pool.query(
-        `INSERT INTO analyses (user_id, resume_id, job_description_id, match_score, result_json, model_name, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'completed')`,
+      const result = await pool.query(
+        `INSERT INTO analyses (user_id, resume_id, job_description_id, match_score, result_json, model_name, status, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, 'completed', now() + interval '24 hours') RETURNING id, created_at`,
         [req.userId, resume.id, job.id, matchScore, payload, model],
       );
+
+      // 24-hour auto-delete: the analysis, its resume and its job description.
+      await pool.query("UPDATE resumes SET expires_at = now() + interval '24 hours' WHERE id = $1", [resume.id]);
+      await pool.query("UPDATE job_descriptions SET expires_at = now() + interval '24 hours' WHERE id = $1", [job.id]);
 
       reserved = false;
       res.status(201).json({
         success: true,
         analysis: {
-          id: result.insertId,
+          id: result.rows[0].id,
           resumeId: resume.id,
           jobDescriptionId: job.id,
           matchScore,
@@ -104,26 +109,30 @@ router.post(
 router.get(
   '/',
   asyncHandler(async (req, res) => {
+    // Lazy purge so expired data never shows up in the history list.
+    await purgeExpired();
+
     const page = Math.max(1, Number.parseInt(req.query.page || '1', 10) || 1);
     const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit || '20', 10) || 20));
     const offset = (page - 1) * limit;
 
-    const [rows] = await pool.query(
-      `SELECT a.id, a.resume_id, a.job_description_id, a.match_score, a.model_name, a.status, a.created_at,
+    const rowsRes = await pool.query(
+      `SELECT a.id, a.resume_id, a.job_description_id, a.match_score, a.model_name, a.status, a.created_at, a.expires_at,
               r.original_filename AS resume_name, j.label AS job_label
        FROM analyses a
        LEFT JOIN resumes r ON r.id = a.resume_id
        LEFT JOIN job_descriptions j ON j.id = a.job_description_id
-       WHERE a.user_id = ?
+       WHERE a.user_id = $1
        ORDER BY a.created_at DESC
-       LIMIT ? OFFSET ?`,
+       LIMIT $2 OFFSET $3`,
       [req.userId, limit, offset],
     );
-    const [[{ total }]] = await pool.query('SELECT COUNT(*) AS total FROM analyses WHERE user_id = ?', [req.userId]);
+    const totalRes = await pool.query('SELECT COUNT(*) AS total FROM analyses WHERE user_id = $1', [req.userId]);
+    const total = totalRes.rows[0].total;
 
     res.json({
       success: true,
-      analyses: rows.map((a) => ({
+      analyses: rowsRes.rows.map((a) => ({
         id: a.id,
         resumeId: a.resume_id,
         jobDescriptionId: a.job_description_id,
@@ -133,6 +142,7 @@ router.get(
         modelName: a.model_name,
         status: a.status,
         createdAt: a.created_at,
+        expiresAt: a.expires_at || null,
       })),
       pagination: { page, limit, total: Number(total) },
     });
@@ -144,16 +154,16 @@ router.get(
   '/:id',
   validateParams(idParamSchema),
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(
+    const rowsRes = await pool.query(
       `SELECT a.*, r.original_filename AS resume_name, j.label AS job_label
        FROM analyses a
        LEFT JOIN resumes r ON r.id = a.resume_id
        LEFT JOIN job_descriptions j ON j.id = a.job_description_id
-       WHERE a.id = ? AND a.user_id = ? LIMIT 1`,
+       WHERE a.id = $1 AND a.user_id = $2 LIMIT 1`,
       [req.params.id, req.userId],
     );
-    if (!rows[0]) throw notFound('Analysis not found.');
-    const a = rows[0];
+    if (!rowsRes.rows[0]) throw notFound('Analysis not found.');
+    const a = rowsRes.rows[0];
     res.json({
       success: true,
       analysis: {
@@ -170,11 +180,8 @@ router.delete(
   '/:id',
   validateParams(idParamSchema),
   asyncHandler(async (req, res) => {
-    const [result] = await pool.query('DELETE FROM analyses WHERE id = ? AND user_id = ?', [
-      req.params.id,
-      req.userId,
-    ]);
-    if (result.affectedRows === 0) throw notFound('Analysis not found.');
+    const deleteRes = await pool.query('DELETE FROM analyses WHERE id = $1 AND user_id = $2 RETURNING id', [req.params.id, req.userId]);
+    if (deleteRes.rows.length === 0) throw notFound('Analysis not found.');
     res.json({ success: true });
   }),
 );

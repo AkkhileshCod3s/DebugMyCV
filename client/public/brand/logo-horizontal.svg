@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 48" width="250" height="48" role="img" aria-label="DebugMyCV">
+  <title>DebugMyCV</title>
+  <path d="M35 24V3H7v42h28V28" fill="none" stroke="#17150F" stroke-width="2"/>
+  <path d="M13 13h16M13 19h16M13 33h16M13 39h10" fill="none" stroke="#17150F" stroke-width="2"/>
+  <path d="M13 26h28" fill="none" stroke="#C2331E" stroke-width="2"/>
+  <circle cx="43.5" cy="26" r="3" fill="#C2331E"/>
+  <text x="62" y="34" font-family="Fraunces, Georgia, 'Times New Roman', serif" font-size="30" font-weight="500" letter-spacing="-0.6" fill="#17150F">DebugMy<tspan fill="#C2331E">CV</tspan></text>
+</svg>

@@ -6,8 +6,6 @@ import {
   ClipboardList,
   History,
   User,
-  BarChart3,
-  Sparkles,
   Inbox,
   ArrowRight,
 } from 'lucide-react';
@@ -56,13 +54,14 @@ export default function Dashboard() {
   const latest = analyses?.[0] || null;
 
   return (
-    <div className="container page animate-in">
+    <div className="container page app-page animate-in">
       <div className="page-head">
-        <div className="stack" style={{ gap: 6 }}>
+        <div className="stack g6">
+          <span className="page-eyebrow">01 / Dashboard</span>
           <h1>
-            Hi {firstName}, <span className="violet">let&apos;s find your match</span>
+            Hi {firstName}, <span className="text-accent">let&apos;s find your match</span>
           </h1>
-          <p className="muted">Upload a resume, add a job description and get a clear compatibility picture.</p>
+          <p className="page-lede">Upload a resume, add a job description and get a clear compatibility picture.</p>
         </div>
         <Link to="/analyze" className="btn btn-primary">
           <ScanSearch size={18} strokeWidth={1.75} aria-hidden="true" />
@@ -72,64 +71,64 @@ export default function Dashboard() {
 
       <ErrorMessage>{error}</ErrorMessage>
 
-      <section aria-labelledby="quick-heading" className="stack" style={{ marginBottom: 24 }}>
-        <h2 id="quick-heading" className="sr-only">
-          Quick actions
+      <section aria-labelledby="quick-heading" className="stack mb24">
+        <h2 id="quick-heading" className="section-heading">
+          <span className="section-eyebrow">Quick actions</span>
+          <span className="section-title">Today</span>
         </h2>
         <div className="quick-actions">
           <GlassCard hover className="action-card" as="button" onClick={() => navigate('/analyze')}>
-            <span className="icon-badge" aria-hidden="true">
-              <FileUp size={21} strokeWidth={1.75} />
+            <span className="icon-box" aria-hidden="true">
+              <FileUp size={20} strokeWidth={1.5} />
             </span>
             <span className="action-body">
               <span className="action-title">Add a resume</span>
               <span className="action-sub">Upload a PDF or paste text</span>
             </span>
+            <span className="action-open" aria-hidden="true">Open →</span>
           </GlassCard>
           <GlassCard hover className="action-card" as="button" onClick={() => navigate('/analyze')}>
-            <span className="icon-badge sky" aria-hidden="true">
-              <ClipboardList size={21} strokeWidth={1.75} />
+            <span className="icon-box" aria-hidden="true">
+              <ClipboardList size={20} strokeWidth={1.5} />
             </span>
             <span className="action-body">
               <span className="action-title">Add a job description</span>
               <span className="action-sub">Paste the role you&apos;re targeting</span>
             </span>
+            <span className="action-open" aria-hidden="true">Open →</span>
           </GlassCard>
           <GlassCard hover className="action-card" as="button" onClick={() => navigate('/history')}>
-            <span className="icon-badge mint" aria-hidden="true">
-              <History size={21} strokeWidth={1.75} />
+            <span className="icon-box" aria-hidden="true">
+              <History size={20} strokeWidth={1.5} />
             </span>
             <span className="action-body">
               <span className="action-title">Past analyses</span>
               <span className="action-sub">Reopen previous results</span>
             </span>
+            <span className="action-open" aria-hidden="true">Open →</span>
           </GlassCard>
           <GlassCard hover className="action-card" as="button" onClick={() => navigate('/profile')}>
-            <span className="icon-badge cream" aria-hidden="true">
-              <User size={21} strokeWidth={1.75} />
+            <span className="icon-box" aria-hidden="true">
+              <User size={20} strokeWidth={1.5} />
             </span>
             <span className="action-body">
               <span className="action-title">Profile &amp; settings</span>
               <span className="action-sub">Name, password, privacy</span>
             </span>
+            <span className="action-open" aria-hidden="true">Open →</span>
           </GlassCard>
         </div>
       </section>
 
-      <div className="grid" style={{ marginBottom: 24 }}>
+      <div className="grid mb24">
         <GlassCard className="stat-card">
-          <div className="stat-top">
-            <span className="stat-label">Latest match score</span>
-            <span className="icon-badge" aria-hidden="true">
-              <BarChart3 size={20} strokeWidth={1.75} />
-            </span>
-          </div>
+          <div className="stat-head">Latest match score</div>
           {analyses === null ? (
             <SkeletonLoader lines={2} />
           ) : latest ? (
-            <div className="row" style={{ gap: 16 }}>
+            <div className="row g16">
               <MatchScore score={latest.matchScore} size={110} />
-              <div className="stack" style={{ gap: 6 }}>
+              <div className="stack g6">
                 <strong>{scoreLabel(latest.matchScore)}</strong>
                 <span className="muted small">{latest.jobLabel}</span>
                 <Link to={`/analyses/${latest.id}`} className="small">
@@ -143,16 +142,11 @@ export default function Dashboard() {
         </GlassCard>
 
         <GlassCard className="stat-card">
-          <div className="stat-top">
-            <span className="stat-label">Today&apos;s usage (Asia/Kolkata)</span>
-            <span className="icon-badge sky" aria-hidden="true">
-              <Sparkles size={20} strokeWidth={1.75} className="glow" />
-            </span>
-          </div>
+          <div className="stat-head">Today&apos;s usage (Asia/Kolkata)</div>
           {usage === null ? (
             <SkeletonLoader lines={3} />
           ) : (
-            <div className="stack" style={{ gap: 16 }}>
+            <div className="stack">
               <UsageQuotaIndicator
                 title="Resume uploads"
                 used={usage.uploads.used}
@@ -175,7 +169,7 @@ export default function Dashboard() {
       <section aria-labelledby="recent-heading" className="stack">
         <div className="row-between">
           <h2 id="recent-heading">Recent analyses</h2>
-          <Link to="/history" className="btn btn-ghost btn-sm">
+          <Link to="/history" className="btn btn-secondary btn-sm">
             View all
             <ArrowRight size={15} aria-hidden="true" />
           </Link>
@@ -198,7 +192,7 @@ export default function Dashboard() {
           ) : (
             <div className="recent-list">
               {analyses.map((a) => (
-                <Link key={a.id} to={`/analyses/${a.id}`} className="recent-item" style={{ color: 'inherit' }}>
+                <Link key={a.id} to={`/analyses/${a.id}`} className="recent-item">
                   <span className="score-chip">{a.matchScore}</span>
                   <span className="recent-body">
                     <span className="recent-title">{a.jobLabel}</span>

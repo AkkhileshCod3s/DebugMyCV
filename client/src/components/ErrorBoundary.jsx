@@ -21,20 +21,20 @@ export class ErrorBoundary extends Component {
     if (!this.state.error) return this.props.children;
     return (
       <div className="container page">
-        <GlassCard className="page-narrow animate-in" style={{ margin: '0 auto' }}>
+        <GlassCard className="page-narrow animate-in">
           <div className="empty-state">
-            <span className="icon-badge pink" aria-hidden="true">
+            <span className="icon-badge" aria-hidden="true">
               <AlertCircle size={26} strokeWidth={1.75} />
             </span>
             <h2>Something went wrong</h2>
             <p className="muted small">
               An unexpected error interrupted this screen. Your data is safe — try reloading the page.
             </p>
-            <div className="row" style={{ justifyContent: 'center' }}>
+            <div className="row row-center">
               <PrimaryButton type="button" onClick={() => window.location.reload()}>
                 Reload page
               </PrimaryButton>
-              <Link to="/dashboard" className="btn btn-ghost">
+              <Link to="/dashboard" className="btn btn-secondary">
                 Go to dashboard
               </Link>
             </div>

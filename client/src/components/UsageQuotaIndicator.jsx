@@ -8,7 +8,7 @@ export function UsageQuotaIndicator({ title, used = 0, max = 0, remaining, kind 
     <div className="quota-inline">
       <div className="row-between">
         <span className="label">{title}</span>
-        <span className={rem === 0 ? 'badge badge-warn' : 'badge'}>
+        <span className="usage-badge">
           {rem} of {max} remaining
         </span>
       </div>

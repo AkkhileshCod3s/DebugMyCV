@@ -15,9 +15,9 @@ import { tooMany } from '../utils/errors.js';
 
 async function ensureRow(userId, date) {
   await pool.query(
-    `INSERT INTO daily_usage (user_id, usage_date, successful_resume_upload_count, ai_analysis_count)
-     VALUES ($1, $2, 0, 0)
-     ON CONFLICT (user_id, usage_date) DO NOTHING`,
+    'INSERT INTO daily_usage (user_id, usage_date, successful_resume_upload_count, ai_analysis_count) ' +
+      'VALUES ($1, $2, 0, 0) ' +
+      'ON CONFLICT (user_id, usage_date) DO NOTHING',
     [userId, date],
   );
 }
@@ -31,10 +31,9 @@ export async function reserveSlot(userId, kind, max) {
     await conn.query('BEGIN');
     await ensureRow(userId, date, conn);
     const result = await conn.query(
-      `UPDATE daily_usage
-       SET "${column}" = "${column}" + 1
-       WHERE user_id = $1 AND usage_date = $2 AND "${column}" < $3
-       RETURNING "${column}" AS new_count`,
+      'UPDATE daily_usage SET "' + column + '" = "' + column + '" + 1 ' +
+        'WHERE user_id = $1 AND usage_date = $2 AND "' + column + '" < $3 ' +
+        'RETURNING "' + column + '" AS new_count',
       [userId, date, max],
     );
     await conn.query('COMMIT');
@@ -52,9 +51,8 @@ export async function releaseSlot(userId, kind) {
   const date = todayKey();
   const column = kind === 'uploads' ? 'successful_resume_upload_count' : 'ai_analysis_count';
   await pool.query(
-    `UPDATE daily_usage
-     SET "${column}" = GREATEST("${column}" - 1, 0)
-     WHERE user_id = $1 AND usage_date = $2`,
+    'UPDATE daily_usage SET "' + column + '" = GREATEST("' + column + '" - 1, 0) ' +
+      'WHERE user_id = $1 AND usage_date = $2',
     [userId, date],
   );
 }
@@ -75,8 +73,8 @@ export async function reserveOrFail(userId, kind) {
 export async function getDailyUsage(userId) {
   const date = todayKey();
   const res = await pool.query(
-    `SELECT successful_resume_upload_count, ai_analysis_count
-     FROM daily_usage WHERE user_id = $1 AND usage_date = $2`,
+    'SELECT successful_resume_upload_count, ai_analysis_count ' +
+      'FROM daily_usage WHERE user_id = $1 AND usage_date = $2',
     [userId, date],
   );
   const row = res.rows[0] || { successful_resume_upload_count: 0, ai_analysis_count: 0 };

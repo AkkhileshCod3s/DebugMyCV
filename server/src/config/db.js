@@ -1,17 +1,18 @@
-import pg from 'pg';
-import { env } from './env.js';
-
-export const { Pool } = pg;
+import 'dotenv/config';
+import { Pool } from 'pg';
 
 export const pool = new Pool({
-  host: env.DB_HOST,
-  port: env.DB_PORT,
-  database: env.DB_NAME,
-  user: env.DB_USER,
-  password: env.DB_PASSWORD,
-  max: 3, // Supabase pooled connection limit (1-3)
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }, // Supabase requires SSL
-  connectionTimeoutMillis: 5000,
+  max: 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+
+// Idle clients can be terminated by the server (ECONNRESET); without this
+// handler an 'error' event on an idle client would crash the process.
+pool.on('error', (err) => {
+  console.error('[pg pool error]', err.message);
 });
 
 // Postgres returns TIMESTAMPTZ as proper Date (UTC-aware). No connection-level

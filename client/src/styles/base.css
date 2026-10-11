@@ -12,15 +12,16 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body {
-  font-family: var(--font);
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.6;
-  color: var(--text-body);
-  background-color: var(--bg-base);
-  background-image: var(--bg-mesh);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: none;
   background-attachment: fixed;
   background-repeat: no-repeat;
   min-height: 100vh;
@@ -35,19 +36,27 @@ body {
 }
 
 img,
-svg {
+svg,
+table,
+pre {
   display: block;
   max-width: 100%;
+}
+
+img,
+svg {
+  display: block;
 }
 
 h1,
 h2,
 h3,
 h4 {
-  color: var(--text-heading);
+  color: var(--ink);
   line-height: 1.2;
   font-weight: 700;
   overflow-wrap: break-word;
+  margin: 0 0 12px;
 }
 
 h1 {
@@ -70,12 +79,19 @@ p {
 }
 
 a {
-  color: var(--violet-strong);
+  color: var(--accent);
   text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 button,
@@ -87,13 +103,13 @@ select {
 }
 
 :focus-visible {
-  outline: 2px solid var(--violet);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: 0;
 }
 
 ::selection {
-  background: rgba(139, 124, 246, 0.28);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* ── Layout ────────────────────────────────────────────────────────────────── */
@@ -152,7 +168,7 @@ select {
 }
 
 .muted {
-  color: var(--text-muted);
+  color: var(--muted);
 }
 
 .small {
@@ -166,6 +182,44 @@ select {
 
 .violet {
   color: var(--violet-strong);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+/* ── Small layout utilities (replace inline spacing styles) ─────────────── */
+
+.g6 { gap: 6px; }
+.g10 { gap: 10px; }
+.g14 { gap: 14px; }
+.g16 { gap: 16px; }
+.g20 { gap: 20px; }
+.g24 { gap: 24px; }
+.mb0 { margin-bottom: 0; }
+.mb24 { margin-bottom: 24px; }
+.mw480 { max-width: 480px; }
+.nw560 { width: min(560px, 100%); }
+.self-start { align-self: flex-start; }
+.row-center { justify-content: center; }
+.h1-sm { font-size: 2rem; }
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  line-height: 1;
+}
+
+.logo-text {
+  font-family: var(--font-heading);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.logo-accent {
+  color: var(--accent);
 }
 
 .center {
@@ -246,4 +300,33 @@ select {
   body {
     background-attachment: scroll;
   }
+}
+
+/* ── Square corners everywhere ────────────────────────────────────────────── */
+button,
+.btn,
+[class*="btn"],
+a[class*="btn"],
+input:not([type='radio']):not([type='checkbox']),
+select,
+textarea,
+[role="button"],
+[role="tab"],
+[class*="chip"],
+[class*="badge"],
+[class*="tag"],
+[class*="pill"] {
+  border-radius: 0 !important;
+}
+
+.glass,
+.dialog,
+.toast,
+.skip-link,
+[class*="card"],
+[class*="modal"],
+[class*="menu"],
+[class*="dropdown"],
+[class*="alert"] {
+  border-radius: 0 !important;
 }

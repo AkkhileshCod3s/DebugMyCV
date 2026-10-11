@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext.jsx';
-import { GhostButton, PrimaryButton, LoadingSpinner, ErrorMessage } from '../components/ui.jsx';
-import { useToast } from '../context/ToastContext.jsx';
+import { SecondaryButton, LoadingSpinner, ErrorMessage } from '../components/ui.jsx';
 import { api } from '../services/api.js';
 
 const fmtDate = (iso) =>
@@ -27,8 +27,6 @@ function SectionHead({ label, icon: Icon }) {
 
 export default function AnalysisResult() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const toast = useToast();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -53,16 +51,9 @@ export default function AnalysisResult() {
     load();
   }, [load]);
 
-  const downloadJson = () => {
-    if (!analysis) return;
-    const blob = new Blob([JSON.stringify(analysis.result, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `debugmycv-analysis-${analysis.id}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Result downloaded.');
+  const handleDownload = () => {
+    document.title = 'DebugMyCV-report';
+    window.print();
   };
 
   if (loading) {
@@ -80,7 +71,7 @@ export default function AnalysisResult() {
         <div className="margin-note">
           <p className="margin-note-title">Error</p>
           <p>{error}</p>
-          <button type="button" className="btn" onClick={load} aria-label="Retry loading this report">
+          <button type="button" className="btn btn-secondary no-print" onClick={load} aria-label="Retry loading this report">
             Retry
           </button>
         </div>
@@ -93,19 +84,21 @@ export default function AnalysisResult() {
 
   return (
     <div className="container results">
-      <header className="header">
-        <div className="header-left">
-          <h1 className="header-title">{`${isDark ? 'Results' : 'Analysis results'}`}</h1>
+      <div className="page-head">
+        <div className="stack g6">
+          <span className="page-eyebrow">01 / Report</span>
+          <h1 className="page-title">{`${isDark ? 'Results' : 'Analysis results'}`}</h1>
+          <p className="hint">Reports are deleted automatically 24 hours after analysis.</p>
         </div>
-        <nav className="header-right" aria-label="Results">
+        <nav className="header-right no-print" aria-label="Results">
           <Link to="/analyze" className="header-link">
             Upload new resume
           </Link>
-          <Link to="/analyze" className="header-link">
-            Download report
-          </Link>
+          <button type="button" className="btn btn-primary" onClick={handleDownload}>
+            Download report (PDF)
+          </button>
         </nav>
-      </header>
+      </div>
 
       <div className="results-top">
         <div className="results-top-left">
@@ -116,13 +109,10 @@ export default function AnalysisResult() {
         <div className="results-top-right">
           <div className="score-block">
             <p className="score-label">Overall score</p>
-            <h1
-              className="score-value"
-              aria-label={`Overall score ${score} out of 100`}
-            >
+            <p className="score-value" aria-label={`Overall score ${score} out of 100`}>
               {score}
               <span className="score-out-of">/ 100</span>
-            </h1>
+            </p>
           </div>
           <div className="scale">
             <div className="scale-baseline">
@@ -193,23 +183,21 @@ export default function AnalysisResult() {
             <p className="resume-page-label">Resume</p>
             {r.findings && r.findings.length > 0 ? (
               r.findings.map((f, i) => {
-                const kind = f.problem ? 'problem' : f.strength ? 'strength' : f.caution ? 'caution' : '';
-                const color = kind === 'problem' ? 'var(--accent)' : kind === 'strength' ? 'var(--green)' : kind === 'caution' ? 'var(--ochre)' : 'var(--ink-3)';
+                const kind = f.problem ? 'problem' : f.strength ? 'strength' : f.caution ? 'caution' : 'neutral';
                 return (
                   <div key={`f${i}`} className="resume-body">
                     <span
-                      className={`annotated ${kind ? `annotated-${kind}` : ''}`}
+                      className={`annotated annotated-${kind}`}
                       data-note={f.text || f.note || ''}
-                      style={{ borderBottomColor: color }}
                     >
-                      <sup style={{ color }}>{i + 1}</sup> {f.text || f.note || ''}
+                      <sup>{i + 1}</sup> {f.text || f.note || ''}
                     </span>
                     {f.note && (
                       <div className="note-cell">
                         <div className="note-row">
                           <span className="leader" aria-hidden="true" />
                           <div>
-                            <p className="note-label" style={{ color }}>
+                            <p className={`note-label note-label-${kind}`}>
                               {i + 1} · {f.title || 'Note'}
                             </p>
                             <p className="note-text">{f.note}</p>
@@ -228,7 +216,7 @@ export default function AnalysisResult() {
       </section>
 
       <section className="rewrites">
-        <SectionHead label="03 / Tracked rewrites" icon={Sparkles} />
+        <SectionHead label="3 / Tracked rewrites" icon={Sparkles} />
         {r.rewritePairs && r.rewritePairs.length > 0 ? (
           <div className="rewrite-rows">
             {r.rewritePairs.map((pair, i) => (
@@ -237,7 +225,7 @@ export default function AnalysisResult() {
                 <p className="rewrite-original">{pair.original || 'No original line supplied.'}</p>
                 <p className="rewrite-improved">{pair.improved || 'No improved line supplied.'}</p>
                 <div className="rewrite-actions">
-                  <GhostButton type="button">Copy rewrite</GhostButton>
+                  <SecondaryButton type="button" className="no-print">Copy rewrite</SecondaryButton>
                 </div>
               </div>
             ))}
@@ -245,16 +233,13 @@ export default function AnalysisResult() {
         ) : (
           <p className="muted">No tracked rewrites were generated for this resume.</p>
         )}
-        <div className="rewrite-actions">
-          <Link to="/analyze" className="btn">
-            Download report
-          </Link>
+        <div className="rewrite-actions no-print">
+          <button type="button" className="btn btn-primary" onClick={handleDownload}>
+            Download report (PDF)
+          </button>
         </div>
       </section>
 
-      <footer className="footer">
-        <p>DebugMyCV · your resume analysed · {score} out of 100.</p>
-      </footer>
     </div>
   );
 }

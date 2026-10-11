@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, LogIn, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { GlassCard, PrimaryButton, InputField, ErrorMessage } from '../components/ui.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -45,39 +45,46 @@ export default function Login() {
   };
 
   return (
-    <div className="container auth-wrap">
-      <GlassCard className="auth-card animate-in" strong>
-        <div className="auth-head">
-          <span className="icon-badge" aria-hidden="true" style={{ margin: '0 auto' }}>
-            <Sparkles size={22} strokeWidth={1.75} />
+    <div className="sheet-wrap">
+      <GlassCard className="sheet-card animate-in" strong>
+        <div className="sheet-head">
+          <span className="sheet-icon" aria-hidden="true">
+            <LogIn size={22} strokeWidth={1.5} color="currentColor" aria-hidden="true" />
           </span>
-          <h1 style={{ fontSize: '1.7rem' }}>Welcome back</h1>
-          <p className="muted small">Sign in to continue to your dashboard.</p>
+          <h1 className="sheet-title">Sign in</h1>
+          <p className="sheet-sub">Welcome back — sign in to continue to your dashboard.</p>
         </div>
 
         <ErrorMessage>{apiError}</ErrorMessage>
 
-        <form className="stack" onSubmit={onSubmit} noValidate>
-          <InputField
-            label="Email"
-            type="email"
-            name="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            required
-            value={form.email}
-            onChange={set('email')}
-            error={errors.email}
-          />
+        <form className="sheet-form" onSubmit={onSubmit} noValidate>
+          <div className="field">
+            <span className="field-label">
+              <Mail size={15} strokeWidth={1.5} color="currentColor" aria-hidden="true" />
+              Email
+            </span>
+            <InputField
+              label=""
+              type="email"
+              name="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              required
+              value={form.email}
+              onChange={set('email')}
+              error={errors.email}
+            />
+          </div>
 
           <div className="field">
-            <label className="label" htmlFor="login-password">
-              Password <span className="req" aria-hidden="true">*</span>
-            </label>
-            <div className="input-wrap">
+            <span className="field-label">
+              <Lock size={15} strokeWidth={1.5} color="currentColor" aria-hidden="true" />
+              Password
+            </span>
+            <div className="field-input-wrap">
               <input
                 id="login-password"
-                className="input"
+                className="field-input"
                 type={showPassword ? 'text' : 'password'}
                 name="password"
                 autoComplete="current-password"
@@ -90,19 +97,15 @@ export default function Login() {
               />
               <button
                 type="button"
-                className="input-action"
+                className="field-input-action"
                 onClick={() => setShowPassword((s) => !s)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={18} strokeWidth={1.5} color="currentColor" aria-hidden="true" /> : <Eye size={18} strokeWidth={1.5} color="currentColor" aria-hidden="true" />}
               </button>
             </div>
-            {errors.password && (
-              <span className="field-error" id="login-password-error" role="alert">
-                {errors.password}
-              </span>
-            )}
+            {errors.password && <span className="field-error" id="login-password-error" role="alert">{errors.password}</span>}
           </div>
 
           <PrimaryButton type="submit" loading={submitting} block>
@@ -112,7 +115,7 @@ export default function Login() {
         </form>
 
         <p className="muted small center">
-          No account yet? <Link to="/register">Create one</Link>
+          No account yet? <Link to="/register" onClick={() => document.getElementById('sheet-tabs')?.scrollIntoView({ behavior: 'smooth' })}>Create one</Link>
         </p>
       </GlassCard>
     </div>

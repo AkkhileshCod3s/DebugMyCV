@@ -16,12 +16,7 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 
-  DB_HOST: process.env.DB_HOST || 'localhost',
-  DB_PORT: int(process.env.DB_PORT, 5432),
-  DB_NAME: process.env.DB_NAME || 'careerlens_ai',
-  DB_USER: process.env.DB_USER || 'postgres',
-  DB_PASSWORD: process.env.DB_PASSWORD ?? '',
-  DB_POOL_SIZE: int(process.env.DB_POOL_SIZE, 3),
+  DATABASE_URL: process.env.DATABASE_URL || '',
 
   SESSION_SECRET: process.env.SESSION_SECRET || '',
   JWT_SECRET: process.env.JWT_SECRET || '',
@@ -39,6 +34,9 @@ export const env = {
   APP_TIMEZONE: process.env.APP_TIMEZONE || 'Asia/Kolkata',
 };
 
+if (!env.DATABASE_URL && env.NODE_ENV === 'production') {
+  throw new Error('[config] DATABASE_URL is required in production');
+}
 if (!env.SESSION_SECRET) {
   // Development-only fallback; sessions restart when the server restarts.
   env.SESSION_SECRET = crypto.randomBytes(48).toString('hex');
@@ -62,8 +60,7 @@ export function validateConfig() {
     if (!env.JWT_SECRET) {
       problems.push('JWT_SECRET must be set in production');
     }
-    if (!env.DB_USER) problems.push('DB_USER is required in production');
-    if (!env.DB_PASSWORD) problems.push('DB_PASSWORD is required in production');
+
     if (!env.GROQ_API_KEY) problems.push('GROQ_API_KEY is required in production when AI_ENABLED=true');
   }
 

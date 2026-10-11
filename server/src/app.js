@@ -1,3 +1,4 @@
+import 'express-async-errors';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -14,9 +15,7 @@ import jobRoutes from './routes/job.routes.js';
 import analysisRoutes from './routes/analysis.routes.js';
 import usageRoutes, { profileRouter } from './routes/usage.routes.js';
 
-// Persistent, distributed daily quota counters (Supabase/Postgres).
-// No per-invocation in-memory counters, no redis dependency.
-import { reserveOrFail, releaseSlot, getDailyUsage } from './services/usage.service.js';
+import { purgeExpired } from './services/cleanup.service.js';
 
 // Postgres session store backed by the same pooled connection.
 const SessionStore = session.Store;
@@ -29,30 +28,36 @@ export class PgSessionStore extends SessionStore {
   async get(sid, callback) {
     try {
       const res = await this.pool.query(
-        `SELECT session_id, expires, data FROM ${this.tableName} WHERE session_id = $1`,
+        'SELECT session_id, expires, data FROM ' + this.tableName + ' WHERE session_id = $1',
         [sid],
       );
       if (res.rows.length === 0) return callback();
       const row = res.rows[0];
-      // Express-session expects expires as number (seconds).
-      this.sessions.set(sid, {
-        cookie: { expires: new Date(row.expires / 1000) },
-        handoff: () => {},
-        isChanged: false,
-        isDestroyed: false,
-      });
-      callback();
+      // `expires` is epoch milliseconds (BIGINT); expired rows read as no session.
+      if (!row.data || Number(row.expires) <= Date.now()) return callback();
+      let sess;
+      try {
+        sess = JSON.parse(row.data);
+      } catch {
+        return callback();
+      }
+      if (!sess || !sess.cookie) return callback();
+      // Hand the stored session (including its cookie) to express-session.
+      callback(null, sess);
     } catch (err) {
       callback(err);
     }
   }
   async set(sid, session, callback) {
     try {
-      const expires = Date.now() + session.cookie.maxAge;
+      const maxAge = Number.isFinite(session.cookie?.maxAge)
+        ? session.cookie.maxAge
+        : 7 * 24 * 60 * 60 * 1000;
+      const expires = Date.now() + maxAge;
       const data = JSON.stringify(session);
       await this.pool.query(
-        `INSERT INTO ${this.tableName} (session_id, expires, data) VALUES ($1, $2, $3)
-         ON CONFLICT (session_id) DO UPDATE SET expires = $2, data = $3`,
+        'INSERT INTO ' + this.tableName + ' (session_id, expires, data) VALUES ($1, $2, $3) ' +
+          'ON CONFLICT (session_id) DO UPDATE SET expires = $2, data = $3',
         [sid, expires, data],
       );
       callback();
@@ -62,7 +67,7 @@ export class PgSessionStore extends SessionStore {
   }
   async destroy(sid, callback) {
     try {
-      await this.pool.query(`DELETE FROM ${this.tableName} WHERE session_id = $1`, [sid]);
+      await this.pool.query('DELETE FROM ' + this.tableName + ' WHERE session_id = $1', [sid]);
       callback();
     } catch (err) {
       callback(err);
@@ -147,8 +152,25 @@ export function createApp() {
   app.use('/api/usage', usageRoutes);
   app.use('/api/profile', profileRouter);
 
+  // Vercel cron: purge expired data (requires CRON_SECRET bearer token).
+  app.get('/api/cron/purge', async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    const auth = req.get('authorization') || '';
+    if (!secret || auth !== `Bearer ${secret}`) {
+      return res.status(401).json({ success: false, message: 'Unauthorized.' });
+    }
+    const counts = await purgeExpired();
+    res.json({ success: true, purged: counts });
+  });
+
   app.use(notFoundHandler);
   app.use(errorHandler);
+
+  // Catch-all: nothing escapes the error pipeline and takes the process down.
+  app.use((err, req, res, next) => {
+    console.error('[route error]', req.method, req.originalUrl, err);
+    res.status(err.status || 500).json({ message: err.message || 'Server error' });
+  });
 
   return app;
 }

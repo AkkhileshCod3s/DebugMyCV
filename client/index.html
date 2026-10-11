@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#F4F1EA" />
     <meta
       name="description"
-      content="CareerLens AI — upload your resume, add a job description and get a clear match score, missing skills and improvement suggestions."
+      content="DebugMyCV — upload your resume, add a job description and get a clear match score, missing skills and improvement suggestions."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,7 +14,25 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <title>CareerLens AI — Smart Resume &amp; Job Matcher</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>DebugMyCV</title>
+    <script>
+      // Set the theme before first paint to avoid a flash of the wrong theme.
+      (function () {
+        try {
+          var t = localStorage.getItem('debugmycv-theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.dataset.theme = t;
+          document.documentElement.style.colorScheme = t;
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
+    <meta property="og:title" content="DebugMyCV" />
+    <meta property="og:description" content="Find out what your resume actually says." />
   </head>
   <body>
     <div id="root"></div>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { FileUp, FileText, X } from 'lucide-react';
+import { FileUp, FileText } from 'lucide-react';
 
 const MAX_MB = 5;
 
@@ -14,7 +14,7 @@ export function FileUploader({ file, onSelect, onClear, disabled, error, maxMb =
   };
 
   return (
-    <div className="stack" style={{ gap: 10 }}>
+    <div className="stack g10">
       {file ? (
         <div className="file-chip">
           <FileText size={17} strokeWidth={1.75} aria-hidden="true" />
@@ -23,12 +23,11 @@ export function FileUploader({ file, onSelect, onClear, disabled, error, maxMb =
           </span>
           <button
             type="button"
-            className="btn btn-ghost btn-sm"
+            className="btn btn-secondary btn-sm"
             onClick={onClear}
             disabled={disabled}
             aria-label={`Remove ${file.name}`}
           >
-            <X size={15} aria-hidden="true" />
             Remove
           </button>
         </div>

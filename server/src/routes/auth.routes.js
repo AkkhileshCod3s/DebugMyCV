@@ -22,22 +22,22 @@ router.post(
     const { name, email, password } = req.body;
     const passwordHash = await bcrypt.hash(password, ROUNDS);
 
-    let rows;
     try {
-      const [result] = await pool.query(
-        'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
-        [name, email, passwordHash],
+      const result = await pool.query(
+        'INSERT INTO users (name, email, password_hash, consent_at, consent_version) VALUES ($1, $2, $3, now(), $4) RETURNING id, created_at',
+        [name, email, passwordHash, req.body.consentVersion],
       );
-      rows = [{ id: result.insertId, name, email, created_at: new Date().toISOString() }];
+      const row = result.rows[0];
+      await regenerate(req);
+      req.session.userId = row.id;
+      req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000;
+      res.status(201).json({ success: true, user: publicUser({ id: row.id, name, email, created_at: row.created_at }) });
     } catch (err) {
-      if (err?.code === 'ER_DUP_ENTRY') throw conflict('An account with this email already exists.');
+      if (err?.code === '23505') throw conflict('An account with this email already exists.');
+      // Log the real failure (message only — never the password or hash).
+      console.error('[auth:register]', err?.message || err);
       throw err;
     }
-
-    await regenerate(req);
-    req.session.userId = rows[0].id;
-    req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000;
-    res.status(201).json({ success: true, user: publicUser(rows[0]) });
   }),
 );
 
@@ -47,8 +47,8 @@ router.post(
   validateBody(loginSchema),
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ? LIMIT 1', [email]);
-    const user = rows[0];
+    const emailRes = await pool.query('SELECT id, name, email, password_hash, created_at FROM users WHERE email = $1 LIMIT 1', [email]);
+    const user = emailRes.rows[0];
 
     const ok = user ? await bcrypt.compare(password, user.password_hash) : false;
     if (!ok) throw unauthorized('Incorrect email or password.');
@@ -73,15 +73,68 @@ router.get(
   '/me',
   asyncHandler(async (req, res) => {
     if (!req.session?.userId) return res.status(201).json({ success: true, user: null });
-    const [rows] = await pool.query('SELECT id, name, email, created_at FROM users WHERE id = ? LIMIT 1', [
-      req.session.userId,
-    ]);
-    if (!rows[0]) {
+    const sessionRes = await pool.query('SELECT id, name, email, created_at FROM users WHERE id = $1 LIMIT 1', [req.session.userId]);
+    if (!sessionRes.rows[0]) {
       await new Promise((resolve) => req.session.destroy(() => resolve()));
       return res.status(201).json({ success: true, user: null });
     }
-    res.json({ success: true, user: publicUser(rows[0]) });
+    res.json({ success: true, user: publicUser(sessionRes.rows[0]) });
   }),
 );
+
+router.post('/login', authLimiter, validateBody(loginSchema), asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const emailRes = await pool.query('SELECT id, name, email, password_hash, created_at FROM users WHERE email = $1 LIMIT 1', [email]);
+  const user = emailRes.rows[0];
+
+  const ok = user ? await bcrypt.compare(password, user.password_hash) : false;
+  if (!ok) throw unauthorized('Incorrect email or password.');
+
+  await regenerate(req);
+  req.session.userId = user.id;
+  req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000;
+}));
+
+router.get('/login', asyncHandler(async (_req, res) => {
+  res.json({ success: true, user: null });
+}));
+
+router.get('/register', asyncHandler(async (_req, res) => {
+  res.json({ success: true, user: null });
+}));
+
+router.post('/login', authLimiter, validateBody(loginSchema), asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const emailRes = await pool.query('SELECT id, name, email, password_hash, created_at FROM users WHERE email = $1 LIMIT 1', [email]);
+  const user = emailRes.rows[0];
+
+  const ok = user ? await bcrypt.compare(password, user.password_hash) : false;
+  if (!ok) throw unauthorized('Incorrect email or password.');
+
+  await regenerate(req);
+  req.session.userId = user.id;
+  req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000;
+  res.json({ success: true, user: publicUser(user) });
+}));
+
+router.post('/register', authLimiter, validateBody(registerSchema), asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
+  const passwordHash = await bcrypt.hash(password, ROUNDS);
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password_hash, consent_at, consent_version) VALUES ($1, $2, $3, now(), $4) RETURNING id, created_at',
+      [name, email, passwordHash, req.body.consentVersion],
+    );
+    const row = result.rows[0];
+    await regenerate(req);
+    req.session.userId = row.id;
+    req.session.cookie.maxAge = 7 * 24 * 60 * 60 * 1000;
+    res.status(201).json({ success: true, user: publicUser({ id: row.id, name, email, created_at: row.created_at }) });
+  } catch (err) {
+    if (err?.code === '23505') throw conflict('An account with this email already exists.');
+    throw err;
+  }
+}));
 
 export default router;
