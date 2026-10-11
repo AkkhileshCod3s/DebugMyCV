@@ -19,7 +19,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "client/index.html"
+      "destination": "/index.html"
     }
   ]
 }
