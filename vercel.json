@@ -18,10 +18,9 @@
       }
     },
     {
-      "source": "/((?!api/).*)",
-      "destination": {
-        "service": "client"
-      }
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ]
+  ],
+  "outputDirectory": "client/dist"
 }

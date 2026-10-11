@@ -15,7 +15,6 @@ const Analyze = lazy(() => import('./pages/Analyze.jsx'));
 const AnalysisResult = lazy(() => import('./pages/AnalysisResult.jsx'));
 const History = lazy(() => import('./pages/History.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
-const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 
 function PageFallback() {
   return (
@@ -94,7 +93,7 @@ export default function App() {
                 }
               />
               <Route path="/index.html" element={<Navigate to="/" replace />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>

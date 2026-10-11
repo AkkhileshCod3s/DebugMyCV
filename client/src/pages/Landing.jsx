@@ -1,5 +1,5 @@
 import { useEffect, useState, useId } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import LandingNav from '../components/LandingNav.jsx';
 import { CONSENT_VERSION } from '../config/legal.js';
@@ -181,6 +181,7 @@ function LoginForm() {
   const passwordId = `${uid}-password`;
 
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
@@ -211,7 +212,7 @@ function LoginForm() {
     setSubmitting(true);
     try {
       await login({ email: form.email, password: form.password });
-      window.location.assign(AFTER_AUTH_PATH);
+      navigate(AFTER_AUTH_PATH, { replace: true });
     } catch (err) {
       setApiError(err.message || 'Could not sign in. Please try again.');
     } finally {
@@ -291,6 +292,7 @@ function RegisterForm() {
   const passwordId = `${uid}-password`;
 
   const { register } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
@@ -323,7 +325,7 @@ function RegisterForm() {
         consent: true,
         consentVersion: CONSENT_VERSION,
       });
-      window.location.assign(AFTER_AUTH_PATH);
+      navigate(AFTER_AUTH_PATH, { replace: true });
     } catch (err) {
       setApiError(err.message || 'Could not create your account. Please try again.');
     } finally {
